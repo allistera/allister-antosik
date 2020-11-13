@@ -7,7 +7,8 @@ const shouldAnalyseBundle = process.env.ANALYSE_BUNDLE
 module.exports = {
   siteMetadata: {
     siteTitleAlt: `Allister Antosik`,
-    siteTitle: "Allister Antosik"
+    siteTitle: "Allister Antosik",
+    siteUrl: "https://allisterantosik.com"
   },
   plugins: [
     {
@@ -32,8 +33,8 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `minimal-blog - @lekoarts/gatsby-theme-minimal-blog`,
-        short_name: `minimal-blog`,
+        name: `Allistere Antosik`,
+        short_name: `allister-antosik`,
         description: `Allister Antosik - thoughts && ideas.`,
         start_url: `/`,
         background_color: `#fff`,

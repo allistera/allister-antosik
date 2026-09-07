@@ -27,7 +27,6 @@
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.1",
     "astro-seo": "^1.2.0",
-    "htmx.org": "^2.0.10",
     "js-yaml": "^5.4.1",
     "shiki": "^4.4.3",
     "tailwindcss": "^4.3.3",

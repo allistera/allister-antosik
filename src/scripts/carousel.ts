@@ -3,20 +3,10 @@ interface CarouselItem {
   title: string;
   description: string;
   images: readonly string[];
-  image?: string;
   link?: string;
 }
 
 type CarouselTelemetry = Pick<typeof import('@sentry/astro'), 'logger' | 'metrics'>;
-
-const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="100%" height="100%" fill="%2318181b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23ff3333" font-family="monospace" font-size="14">Image Load Failure</text></svg>';
-
-const escapeHtml = (value: string) => value
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;')
-  .replaceAll("'", '&#039;');
 
 const responsiveImage = (image: string) => {
   if (!image.startsWith('/screenshots/') || !image.endsWith('.webp')) {
@@ -45,9 +35,7 @@ const setResponsiveSource = (imageElement: HTMLImageElement, image: string) => {
 export const initCarousel = (container: HTMLElement) => {
   const slidesContainer = container.querySelector<HTMLElement>('#carousel-slides');
   const dotsContainer = container.querySelector<HTMLElement>('#carousel-dots');
-  const controls = container.querySelector<HTMLElement>('#carousel-controls');
-  const lightbox = document.getElementById('carousel-lightbox');
-  const lightboxBackdrop = document.getElementById('carousel-lightbox-backdrop');
+  const lightbox = document.getElementById('carousel-lightbox') as HTMLDialogElement | null;
   const lightboxClose = document.getElementById('carousel-lightbox-close');
   const lightboxImage = document.getElementById('carousel-lightbox-image') as HTMLImageElement | null;
   const lightboxTitle = document.getElementById('carousel-lightbox-title');
@@ -57,16 +45,16 @@ export const initCarousel = (container: HTMLElement) => {
 
   if (!slidesContainer || !dotsContainer || !lightbox || !lightboxImage) return;
 
-  const configuredData = JSON.parse(container.dataset.carouselItems || '[]') as CarouselItem[];
-  const data = ((window as typeof window & { carouselData?: CarouselItem[] }).carouselData || configuredData);
+  const data = JSON.parse(container.dataset.carouselItems || '[]') as CarouselItem[];
   if (data.length === 0) return;
 
   let currentIndex = 0;
   let lightboxProjectIndex = 0;
   let lightboxImageIndex = 0;
   let lightboxOpen = false;
+  let lightboxOpener: HTMLElement | null = null;
 
-  const getImages = (item: CarouselItem) => item.images?.length ? item.images : item.image ? [item.image] : [];
+  const getImages = (item: CarouselItem) => item.images;
   const track = (name: string, attributes: Record<string, string | number>) => {
     try {
       const sentry = (window as typeof window & { Sentry?: CarouselTelemetry }).Sentry;
@@ -77,45 +65,6 @@ export const initCarousel = (container: HTMLElement) => {
     }
   };
 
-  const render = () => {
-    const isSingle = data.length === 1;
-    controls?.classList.toggle('hidden', isSingle);
-
-    slidesContainer.innerHTML = data.map((item, index) => {
-      const images = getImages(item);
-      const image = images[0] || '';
-      const responsive = responsiveImage(image);
-      const isMobileDashboard = image.includes('mobile-dashboard');
-      const link = item.link?.trim()
-        ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>`
-        : '<span class="carousel-link inline-block px-4 py-2 bg-zinc-900 text-zinc-600 font-mono text-xs rounded opacity-50 cursor-not-allowed border border-zinc-800">No Link Available</span>';
-
-      return `
-        <div class="carousel-slide ${index === 0 ? 'active' : 'hidden'} flex flex-col md:flex-row gap-6 items-center w-full" data-index="${index}">
-          <div class="w-full md:w-1/2 flex flex-col justify-center">
-            <button type="button" class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus:outline-none focus:ring-2 focus:ring-emerald-500" data-project-index="${index}" data-image-index="0" aria-label="Open screenshot: ${escapeHtml(item.title)}">
-              <img class="carousel-image max-h-56 w-full rounded object-cover transition group-hover:opacity-90" src="${escapeHtml(responsive.src)}" ${responsive.srcset ? `srcset="${escapeHtml(responsive.srcset)}" sizes="(min-width: 1280px) 576px, (min-width: 768px) calc(50vw - 4rem), calc(100vw - 5rem)"` : ''} alt="${escapeHtml(item.title)} screenshot 1" width="640" height="${isMobileDashboard ? 1391 : 436}" decoding="async" fetchpriority="low" loading="lazy" />
-              <span class="pointer-events-none absolute inset-x-0 bottom-0 bg-zinc-950/80 py-1 text-center font-mono text-[10px] text-emerald-400 opacity-0 transition group-hover:opacity-100">Click to expand</span>
-            </button>
-            <div class="carousel-image-controls mt-3 flex items-center justify-center gap-3 ${images.length > 1 ? '' : 'hidden'}" aria-label="${escapeHtml(item.title)} screenshots">
-              <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Previous ${escapeHtml(item.title)} screenshot">&lt; Prev image</button>
-              <span class="carousel-image-counter font-mono text-xs text-zinc-500" aria-live="polite">1 / ${images.length}</span>
-              <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Next ${escapeHtml(item.title)} screenshot">Next image &gt;</button>
-            </div>
-          </div>
-          <div class="w-full md:w-1/2 flex flex-col gap-4">
-            <h3 class="carousel-title text-xl font-bold text-zinc-100 font-mono tracking-wide">${escapeHtml(item.title)}</h3>
-            <p class="carousel-description text-sm text-zinc-400 leading-relaxed">${escapeHtml(item.description)}</p>
-            <div class="pt-2">${link}</div>
-          </div>
-        </div>`;
-    }).join('\n');
-
-    dotsContainer.innerHTML = isSingle ? '' : data.map((_, index) => `
-      <button type="button" class="carousel-dot w-3 h-3 rounded-full border border-zinc-700 bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 ${index === 0 ? 'active bg-emerald-400 border-emerald-400' : ''}" data-carousel-dot="${index}" aria-label="Go to slide ${index + 1}"></button>
-    `).join('\n');
-  };
-
   const goToSlide = (index: number) => {
     const slides = slidesContainer.querySelectorAll<HTMLElement>('.carousel-slide');
     const dots = dotsContainer.querySelectorAll<HTMLElement>('.carousel-dot');
@@ -123,13 +72,17 @@ export const initCarousel = (container: HTMLElement) => {
       slide.classList.remove('active');
       slide.classList.add('hidden');
     });
-    dots.forEach((dot) => dot.classList.remove('active', 'bg-emerald-400', 'border-emerald-400'));
+    dots.forEach((dot) => {
+      dot.classList.remove('active', 'bg-emerald-400');
+      dot.removeAttribute('aria-current');
+    });
 
     currentIndex = (index + data.length) % data.length;
     const activeSlide = slides[currentIndex];
     activeSlide?.classList.remove('hidden');
     activeSlide?.classList.add('active');
-    dots[currentIndex]?.classList.add('active', 'bg-emerald-400', 'border-emerald-400');
+    dots[currentIndex]?.classList.add('active', 'bg-emerald-400');
+    dots[currentIndex]?.setAttribute('aria-current', 'true');
   };
 
   const openLightbox = (projectIndex: number, imageIndex = 0) => {
@@ -147,9 +100,10 @@ export const initCarousel = (container: HTMLElement) => {
     if (lightboxCaption) lightboxCaption.textContent = `${lightboxImageIndex + 1} of ${images.length} - ${item.description || ''}`;
     if (lightboxPrev) lightboxPrev.style.visibility = images.length > 1 ? 'visible' : 'hidden';
     if (lightboxNext) lightboxNext.style.visibility = images.length > 1 ? 'visible' : 'hidden';
-    lightbox.classList.remove('hidden');
-    lightbox.classList.add('flex');
-    lightbox.setAttribute('aria-hidden', 'false');
+    if (!lightbox.open) {
+      lightboxOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      lightbox.showModal();
+    }
     lightboxOpen = true;
     document.body.style.overflow = 'hidden';
     lightboxClose?.focus();
@@ -158,12 +112,12 @@ export const initCarousel = (container: HTMLElement) => {
 
   const closeLightbox = () => {
     if (!lightboxOpen) return;
-    lightbox.classList.add('hidden');
-    lightbox.classList.remove('flex');
-    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.close();
     lightboxOpen = false;
     document.body.style.overflow = '';
     lightboxImage.removeAttribute('src');
+    lightboxOpener?.focus();
+    lightboxOpener = null;
     track('carousel.lightbox.close', {});
   };
 
@@ -194,8 +148,6 @@ export const initCarousel = (container: HTMLElement) => {
     if (counter) counter.textContent = `${next + 1} / ${images.length}`;
   };
 
-  render();
-
   container.addEventListener('click', (event) => {
     const target = event.target as Element;
     const dot = target.closest<HTMLElement>('[data-carousel-dot]');
@@ -214,13 +166,6 @@ export const initCarousel = (container: HTMLElement) => {
       openLightbox(Number.parseInt(imageButton.dataset.projectIndex || '0', 10), Number.parseInt(imageButton.dataset.imageIndex || '0', 10));
     }
   });
-
-  slidesContainer.addEventListener('error', (event) => {
-    const image = event.target;
-    if (!(image instanceof HTMLImageElement) || !image.classList.contains('carousel-image') || image.src.startsWith('data:')) return;
-    image.removeAttribute('srcset');
-    image.src = placeholder;
-  }, true);
 
   container.addEventListener('keydown', (event) => {
     if (lightboxOpen || data.length <= 1) return;
@@ -245,14 +190,38 @@ export const initCarousel = (container: HTMLElement) => {
 
   document.addEventListener('keydown', (event) => {
     if (!lightboxOpen) return;
-    if (event.key === 'Escape') closeLightbox();
-    else if (event.key === 'ArrowRight') stepLightbox(1);
+    if (event.key === 'ArrowRight') stepLightbox(1);
     else if (event.key === 'ArrowLeft') stepLightbox(-1);
     else return;
     event.preventDefault();
   });
 
-  lightboxBackdrop?.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    closeLightbox();
+  });
+  lightbox.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(lightbox.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'))
+      .filter((element) => getComputedStyle(element).visibility !== 'hidden');
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first || !last) return;
+
+    if (focusable.length === 1) {
+      event.preventDefault();
+      first.focus();
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) closeLightbox();
+  });
   lightboxClose?.addEventListener('click', closeLightbox);
   lightboxPrev?.addEventListener('click', () => stepLightbox(-1));
   lightboxNext?.addEventListener('click', () => stepLightbox(1));

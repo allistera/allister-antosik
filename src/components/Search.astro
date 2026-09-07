@@ -9,23 +9,42 @@
 <script>
   (() => {
     let loadPromise: Promise<void> | undefined;
+    let loadAttempt = 0;
+    let stylesheet: HTMLLinkElement | undefined;
+    const status = document.getElementById('site-search-status');
+
+    const reportLoadFailure = () => {
+      if (!status) return;
+      status.textContent = 'Search failed to load. Try again.';
+      status.classList.remove('hidden');
+    };
+
     const load = () => {
       if (loadPromise) return loadPromise;
 
       loadPromise = new Promise((resolve, reject) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = '/pagefind/pagefind-component-ui.css';
-        document.head.appendChild(link);
+        const cacheBuster = loadAttempt > 0 ? `?retry=${loadAttempt}` : '';
+        loadAttempt += 1;
+        stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = '/pagefind/pagefind-component-ui.css';
+        document.head.appendChild(stylesheet);
 
         const script = document.createElement('script');
-        script.src = '/pagefind/pagefind-component-ui.js';
+        script.src = `/pagefind/pagefind-component-ui.js${cacheBuster}`;
         script.type = 'module';
         script.addEventListener('load', async () => {
           await customElements.whenDefined('pagefind-modal-trigger');
+          status?.classList.add('hidden');
           resolve();
         }, { once: true });
-        script.addEventListener('error', () => reject(new Error('Unable to load search')), { once: true });
+        script.addEventListener('error', () => {
+          script.remove();
+          stylesheet?.remove();
+          stylesheet = undefined;
+          loadPromise = undefined;
+          reject(new Error('Unable to load search'));
+        }, { once: true });
         document.head.appendChild(script);
       });
 
@@ -37,22 +56,30 @@
       trigger?.querySelector<HTMLButtonElement>('button')?.click();
     };
     ['pointerenter', 'focusin', 'pointerdown'].forEach((eventName) => {
-      trigger?.addEventListener(eventName, () => void load(), { once: true, passive: true });
+      trigger?.addEventListener(eventName, () => void load().catch(reportLoadFailure), { once: true, passive: true });
     });
 
     trigger?.addEventListener('click', async (event) => {
       if (customElements.get('pagefind-modal-trigger')) return;
       event.preventDefault();
-      await load();
-      openSearch();
+      try {
+        await load();
+        openSearch();
+      } catch {
+        reportLoadFailure();
+      }
     });
 
     document.addEventListener('keydown', async (event) => {
       if (event.key.toLowerCase() !== 'k' || (!event.metaKey && !event.ctrlKey)) return;
       if (customElements.get('pagefind-modal-trigger')) return;
       event.preventDefault();
-      await load();
-      openSearch();
+      try {
+        await load();
+        openSearch();
+      } catch {
+        reportLoadFailure();
+      }
     });
   })();
 </script>
@@ -61,26 +88,27 @@
 <pagefind-modal-trigger
   class="site-search-trigger"
   data-pagefind-ignore
-  aria-label="Search site"
-  role="button"
-  tabindex="0"
+  placeholder="Search posts & pages…"
 >
-  <span class="site-search-trigger__inner">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="site-search-trigger__icon" aria-hidden="true">
-      <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-    </svg>
-    <span class="site-search-trigger__placeholder">Search posts &amp; pages…</span>
-    <kbd class="site-search-trigger__kbd">⌘K</kbd>
-  </span>
+  <button type="button" class="site-search-trigger__button" aria-label="Search posts and pages">
+    <span class="site-search-trigger__inner">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="site-search-trigger__icon" aria-hidden="true">
+        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+      </svg>
+      <span class="site-search-trigger__placeholder">Search posts &amp; pages…</span>
+      <kbd class="site-search-trigger__kbd">⌘K</kbd>
+    </span>
+  </button>
 </pagefind-modal-trigger>
 <pagefind-modal data-pagefind-ignore></pagefind-modal>
+<span id="site-search-status" class="hidden sr-only" role="status" data-pagefind-ignore></span>
 
 <style is:global>
   /* ── Pagefind Component UI (v1.5+) dark zinc / emerald theme ── */
   :root {
     --pf-text: #f4f4f5;
     --pf-text-secondary: #a1a1aa;
-    --pf-text-muted: #71717a;
+    --pf-text-muted: #a1a1aa;
     --pf-background: #09090b;
     --pf-border: #27272a;
     --pf-border-focus: #34d399;
@@ -155,6 +183,13 @@
     outline: none;
   }
 
+  .site-search-trigger__button {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    cursor: pointer;
+  }
+
   .site-search-trigger__inner {
     display: flex;
     width: 100%;
@@ -196,7 +231,7 @@
     padding: 0.1rem 0.35rem;
     font-size: 0.65rem;
     line-height: 1.2;
-    color: #71717a;
+    color: #a1a1aa;
   }
 
   @media (min-width: 640px) {

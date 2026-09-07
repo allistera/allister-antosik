@@ -33,6 +33,7 @@ const schemaList = schema
     ? schema
     : [schema]
   : [];
+const telemetryEnabled = Boolean(import.meta.env.PUBLIC_SENTRY_DSN);
 ---
 
 <!doctype html>
@@ -99,7 +100,6 @@ const schemaList = schema
       <!-- Pagefind indexes regions marked data-pagefind-body (see page mains) -->
       <slot />
     </div>
-    <!-- Client logs + metrics (page views, HTMX, carousel) -->
-    <script src="../scripts/telemetry-init.ts"></script>
+    {telemetryEnabled && <script src="../scripts/telemetry-init.ts"></script>}
   </body>
 </html>

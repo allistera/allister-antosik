@@ -69,32 +69,19 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     expect(htmlLang).toBe('en');
   });
 
-  test('TC-F2-01: HTMX Loading Attributes', async ({ page }) => {
+  test('TC-F2-01: Projects are statically rendered', async ({ page }) => {
     await page.goto('/');
     const projectsList = page.locator('#projects-list');
-    await expect(projectsList).toHaveAttribute('hx-get', '/api/projects/');
-    await expect(projectsList).toHaveAttribute('hx-trigger', 'revealed');
+    await expect(projectsList.locator('.project-card')).toHaveCount(6);
+    await expect(projectsList).not.toHaveAttribute('hx-get');
   });
 
-  test('TC-F2-02: API Projects Endpoint Direct Access', async ({ request }) => {
-    const response = await request.get('/api/projects/');
-    expect(response.status()).toBe(200);
-    const headers = response.headers();
-    expect(headers['content-type']).toContain('text/html');
-    
-    const body = await response.text();
-    expect(body).toContain('project-card');
-    expect(body).toContain('monzo-mcp');
-    expect(body).toContain('daily-news');
-  });
-
-  test('TC-F2-03 & TC-F2-04: Dynamic Card Swapping and Details', async ({ page }) => {
+  test('TC-F2-03 & TC-F2-04: Project Card Rendering and Details', async ({ page }) => {
     await page.goto('/');
     await page.locator('#projects-list').scrollIntoViewIfNeeded();
     
-    // Wait for the project cards to be loaded via HTMX
     const firstCard = page.locator('#projects-list .project-card').first();
-    await expect(firstCard).toBeVisible({ timeout: 10000 });
+    await expect(firstCard).toBeVisible();
     
     // Live endpoint currently ships multiple real project cards
     const cards = page.locator('#projects-list .project-card');
@@ -103,7 +90,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     // Verify metadata of first card
     const cardTitle = cards.nth(0).locator('h3');
     await expect(cardTitle).toHaveText('monzo-mcp');
-    const cardDesc = cards.nth(0).locator('p');
+    const cardDesc = cards.nth(0).locator('.project-description p').first();
     await expect(cardDesc).toContainText("Exposes Monzo's API to MCP clients");
     
     // Check specific metadata fields from current API card shape

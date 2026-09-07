@@ -42,7 +42,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
     <!-- Tag Cloud -->
     {allTags.length > 0 && (
       <section class="flex flex-wrap gap-2 py-2 border-y border-zinc-900">
-        <span class="text-xs text-zinc-500 font-mono self-center mr-2">Filter by Tag:</span>
+        <span class="text-xs text-zinc-400 font-mono self-center mr-2">Filter by Tag:</span>
         <button 
           class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500" 
           data-tag="all">
@@ -61,7 +61,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
     <!-- Posts Grid -->
     <section class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full" id="blog-posts-list">
       {posts.length === 0 ? (
-        <div class="col-span-full text-center text-zinc-500 font-mono py-12">
+        <div class="col-span-full text-center text-zinc-400 font-mono py-12">
           No articles published yet.
         </div>
       ) : (
@@ -70,7 +70,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
             class="blog-post-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors"
             data-tags={JSON.stringify(post.data.tags)}>
             <div class="flex flex-col gap-2">
-              <div class="flex justify-between items-center text-xs text-zinc-500 font-mono">
+              <div class="flex justify-between items-center text-xs text-zinc-400 font-mono">
                 <span>{new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 <span class="reading-time">{post.readingTime}</span>
               </div>

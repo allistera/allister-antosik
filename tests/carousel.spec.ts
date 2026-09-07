@@ -1,325 +1,103 @@
 import { test, expect } from '@playwright/test';
-import { 
-  mockCarouselData, 
-  singleCarouselItem, 
-  brokenImageCarousel, 
-  missingLinkCarousel 
-} from './helpers/mock-data';
 
-test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2', () => {
-
-  test.beforeEach(async ({ page }) => {
-    // Intercept all screenshot image requests to return a dummy 1x1 transparent PNG
-    await page.route('**/screenshots/**/*.{png,jpg,jpeg,webp}', route => {
-      const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      route.fulfill({
-        status: 200,
-        contentType: 'image/png',
-        body: Buffer.from(pngBase64, 'base64')
-      });
-    });
-    await page.route('**/assets/screenshots/**/*.{png,jpg,jpeg,webp}', route => {
-      const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      route.fulfill({
-        status: 200,
-        contentType: 'image/png',
-        body: Buffer.from(pngBase64, 'base64')
-      });
-    });
-
-    // Intercept carousel data fetch by default
-    await page.route('**/carousel.json', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(mockCarouselData)
-      });
-    });
-
-    // Also support inline window configuration
-    await page.addInitScript((data) => {
-      (window as Window & { carouselData?: typeof data }).carouselData = data;
-    }, mockCarouselData);
-
-    await page.goto('/');
+test.describe('Screenshot carousel', () => {
+  const initialiseCarousel = async (page: import('@playwright/test').Page) => {
     const carousel = page.locator('#carousel-container');
     await carousel.scrollIntoViewIfNeeded();
     await expect(carousel).toHaveAttribute('data-carousel-ready', 'true');
-  });
+    return carousel;
+  };
 
-
-  // TC-F3-01: Carousel Container & Initial Slide
-  test('TC-F3-01: Carousel Container & Initial Slide', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    await expect(container).toBeVisible();
-
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[0].title);
-    await expect(activeSlide.locator('.carousel-description')).toHaveText(mockCarouselData[0].description);
-    await expect(activeSlide.locator('.carousel-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
-  });
-
-  // TC-F3-02: Next Button Navigation
-  test('TC-F3-02: Next Button Navigation', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    const nextBtn = container.locator('#carousel-next');
-
-    // Click Next
-    await nextBtn.click();
-
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[1].title);
-    await expect(activeSlide.locator('.carousel-description')).toHaveText(mockCarouselData[1].description);
-  });
-
-  // TC-F3-03: Previous Button Navigation
-  test('TC-F3-03: Previous Button Navigation', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    const prevBtn = container.locator('#carousel-prev');
-
-    // Click Previous on first slide should wrap around to the last slide
-    await prevBtn.click();
-
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText('AIOps Engine Logs');
-  });
-
-  // TC-F3-04: Indicator Dots Navigation
-  test('TC-F3-04: Indicator Dots Navigation', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    const dots = container.locator('.carousel-dot');
-
-    // Click the third dot (index 2)
-    await dots.nth(2).click();
-
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[2].title);
-    
-    // Check dot is active/highlighted
-    await expect(dots.nth(2)).toHaveClass(/active/);
-  });
-
-  // TC-F3-05: External Repository Links
-  test('TC-F3-05: External Repository Links', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    const activeSlide = container.locator('.carousel-slide.active');
-    const repoLink = activeSlide.locator('.carousel-link');
-
-    await expect(repoLink).toHaveAttribute('target', '_blank');
-    await expect(repoLink).toHaveAttribute('href', mockCarouselData[0].link || '');
-  });
-
-  // TC-F3-06: Single Item Carousel Data
-  test('TC-F3-06: Single Item Carousel Data', async ({ page, context }) => {
-    // Open a new page with single item mock
-    const singlePage = await context.newPage();
-    await singlePage.route('**/carousel.json', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(singleCarouselItem)
-      });
+  test('TC-F3-01: initialization enhances the server-rendered slides', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 300 });
+    await page.goto('/');
+    await expect(page.locator('#carousel-container')).toHaveAttribute('data-carousel-ready', 'false');
+    await page.locator('.carousel-slide').first().evaluate((slide) => {
+      (window as Window & { initialCarouselSlide?: Element }).initialCarouselSlide = slide;
     });
-    await singlePage.addInitScript((data) => {
-      (window as Window & { carouselData?: typeof data }).carouselData = data;
-    }, singleCarouselItem);
 
-    await singlePage.goto('/');
-    const singleCarousel = singlePage.locator('#carousel-container');
-    await singleCarousel.scrollIntoViewIfNeeded();
-    await expect(singleCarousel).toHaveAttribute('data-carousel-ready', 'true');
+    const carousel = await initialiseCarousel(page);
 
-    const container = singlePage.locator('#carousel-container');
-    await expect(container).toBeVisible();
-
-    // Arrows and dots should be hidden for single item
-    await expect(container.locator('#carousel-next')).toBeHidden();
-    await expect(container.locator('#carousel-prev')).toBeHidden();
-    await expect(container.locator('.carousel-dot')).toBeHidden();
-
-    // Verify slide renders statically
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(singleCarouselItem[0].title);
-    
-    await singlePage.close();
+    expect(await page.evaluate(() => (
+      (window as Window & { initialCarouselSlide?: Element }).initialCarouselSlide
+      === document.querySelector('.carousel-slide')
+    ))).toBe(true);
+    await expect(carousel.locator('.carousel-slide.active .carousel-title')).toHaveText('Cookie');
   });
 
-  // TC-F3-07: Broken Image URL Fallback
-  test('TC-F3-07: Broken Image URL Fallback', async ({ page, context }) => {
-    const brokenPage = await context.newPage();
-    await brokenPage.route('**/carousel.json', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(brokenImageCarousel)
-      });
-    });
-    await brokenPage.addInitScript((data) => {
-      (window as Window & { carouselData?: typeof data }).carouselData = data;
-    }, brokenImageCarousel);
+  test('TC-F3-02: buttons, dots, and keyboard navigate between slides', async ({ page }) => {
+    await page.goto('/');
+    const carousel = await initialiseCarousel(page);
 
-    // Also route non-existent image to return 404
-    await brokenPage.route('**/non-existent-image-path.png', route => route.abort());
+    await carousel.locator('#carousel-next').click();
+    await expect(carousel.locator('.carousel-slide.active .carousel-title')).toHaveText('Mobile Home Dashboard');
 
-    await brokenPage.goto('/');
-    const brokenCarousel = brokenPage.locator('#carousel-container');
-    await brokenCarousel.scrollIntoViewIfNeeded();
-    await expect(brokenCarousel).toHaveAttribute('data-carousel-ready', 'true');
+    await carousel.locator('.carousel-dot').first().click();
+    await expect(carousel.locator('.carousel-slide.active .carousel-title')).toHaveText('Cookie');
 
-    const container = brokenPage.locator('#carousel-container');
-    const image = container.locator('.carousel-slide.active .carousel-image');
-    
-    // Slide renders, image should either load a placeholder or trigger error without crashing navigation scripts
-    await expect(image).toBeVisible();
-    
-    // Carousel navigation controls should still be visible (for single item, they are hidden, but let's make sure it doesn't crash)
-    await expect(container).toBeVisible();
-    
-    await brokenPage.close();
-  });
-
-  // TC-F3-08: Rapid Navigation Click Stress
-  test('TC-F3-08: Rapid Navigation Click Stress', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    const nextBtn = container.locator('#carousel-next');
-
-    // Spam click Next 10 times rapidly
-    for (let i = 0; i < 10; i++) {
-      await nextBtn.click();
-    }
-
-    // Carousel should not freeze, final state should be consistent (e.g. index 10 % 3 = 1)
-    const activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide).toBeVisible();
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[1].title);
-  });
-
-  // TC-F3-09: Keyboard & Touch Controls
-  test('TC-F3-09: Keyboard & Touch Controls', async ({ page }) => {
-    const container = page.locator('#carousel-container');
-    
-    // Focus the carousel container to receive keyboard events
-    await container.focus();
-    
-    // Press ArrowRight
-    await page.keyboard.press('ArrowRight');
-    let activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[1].title);
-
-    // Press ArrowLeft
+    await carousel.focus();
     await page.keyboard.press('ArrowLeft');
-    activeSlide = container.locator('.carousel-slide.active');
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[0].title);
+    await expect(carousel.locator('.carousel-slide.active .carousel-title')).toHaveText('Mobile Home Dashboard');
   });
 
-  // TC-F3-10: Missing Slide Links Handling
-  test('TC-F3-10: Missing Slide Links Handling', async ({ page, context }) => {
-    const missingLinkPage = await context.newPage();
-    
-    // Intercept screenshots for this page
-    await missingLinkPage.route('**/assets/screenshots/**/*.png', route => {
-      const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      route.fulfill({
-        status: 200,
-        contentType: 'image/png',
-        body: Buffer.from(pngBase64, 'base64')
-      });
-    });
+  test('TC-F3-03: carousel dot controls have usable touch targets', async ({ page }) => {
+    await page.goto('/');
+    const carousel = await initialiseCarousel(page);
 
-    await missingLinkPage.route('**/carousel.json', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(missingLinkCarousel)
-      });
-    });
-    await missingLinkPage.addInitScript((data) => {
-      (window as Window & { carouselData?: typeof data }).carouselData = data;
-    }, missingLinkCarousel);
-
-    await missingLinkPage.goto('/');
-    const missingLinkCarouselElement = missingLinkPage.locator('#carousel-container');
-    await missingLinkCarouselElement.scrollIntoViewIfNeeded();
-    await expect(missingLinkCarouselElement).toHaveAttribute('data-carousel-ready', 'true');
-
-    const container = missingLinkPage.locator('#carousel-container');
-    const activeSlide = container.locator('.carousel-slide.active');
-    
-    // Repository button should be omitted, disabled, or rendered as non-interactive span
-    const repoLink = activeSlide.locator('.carousel-link');
-    const count = await repoLink.count();
-    if (count > 0) {
-      const tagName = await repoLink.evaluate(el => el.tagName.toLowerCase());
-      if (tagName === 'a') {
-        const href = await repoLink.getAttribute('href');
-        expect(href === '#' || href === null || href === '').toBe(true);
-        await expect(repoLink).toHaveClass(/disabled|opacity-50/);
-      } else {
-        await expect(repoLink).toHaveText('No Link Available');
-      }
-    } else {
-      await expect(repoLink).toBeHidden();
+    for (const dot of await carousel.locator('.carousel-dot').all()) {
+      const box = await dot.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(24);
+      expect(box?.height).toBeGreaterThanOrEqual(24);
     }
-
-    await missingLinkPage.close();
   });
 
-  // TC-F3-11: Screenshot opens in lightbox popup
-  test('TC-F3-11: Screenshot lightbox popup', async ({ page }) => {
-    const container = page.locator('#carousel-container');
+  test('TC-F3-04: broken images fall back without disabling navigation', async ({ page }) => {
+    await page.route('**/screenshots/not-found.webp', route => route.fulfill({ status: 404 }));
+    await page.goto('/');
+    await page.locator('.carousel-slide').first().locator('.carousel-image').evaluate((image) => {
+      image.removeAttribute('srcset');
+      image.setAttribute('src', '/screenshots/not-found.webp');
+    });
+    const carousel = await initialiseCarousel(page);
+
+    await expect(carousel.locator('.carousel-slide.active .carousel-image')).toHaveAttribute('src', /^data:image\/svg\+xml/);
+    await carousel.locator('#carousel-next').click();
+    await expect(carousel.locator('.carousel-slide.active .carousel-title')).toHaveText('Mobile Home Dashboard');
+  });
+
+  test('TC-F3-05: screenshot modal contains focus and restores it on close', async ({ page }) => {
+    await page.goto('/');
+    const carousel = await initialiseCarousel(page);
+    const opener = carousel.locator('.carousel-slide.active .carousel-image-btn');
+    await opener.click();
+
     const lightbox = page.locator('#carousel-lightbox');
-    const imageBtn = container.locator('.carousel-slide.active .carousel-image-btn');
-
-    await expect(lightbox).toBeHidden();
-    await imageBtn.click();
-
     await expect(lightbox).toBeVisible();
-    await expect(lightbox.locator('#carousel-lightbox-title')).toHaveText(mockCarouselData[0].title);
-    await expect(lightbox.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
+    for (let index = 0; index < 8; index += 1) {
+      await page.keyboard.press('Tab');
+      expect(await page.evaluate(() => Boolean(document.activeElement?.closest('#carousel-lightbox')))).toBe(true);
+    }
 
     await page.keyboard.press('Escape');
     await expect(lightbox).toBeHidden();
+    await expect(opener).toBeFocused();
   });
 
-  // TC-F3-12: A project can navigate between its own screenshots
-  test('TC-F3-12: Multiple screenshots per project', async ({ page }) => {
-    const activeSlide = page.locator('#carousel-container .carousel-slide.active');
-    const image = activeSlide.locator('.carousel-image');
-
-    await expect(activeSlide.locator('.carousel-image-controls')).toBeVisible();
-    await expect(activeSlide.locator('.carousel-image-counter')).toHaveText('1 / 2');
-
-    await activeSlide.locator('.carousel-image-next').click();
-    await expect(image).toHaveAttribute('src', mockCarouselData[0].images[1]);
-    await expect(activeSlide.locator('.carousel-image-counter')).toHaveText('2 / 2');
-
-    await activeSlide.locator('.carousel-image-btn').click();
-    await expect(page.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[1]);
-
-    await page.locator('#carousel-lightbox-next').click();
-    await expect(page.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
-  });
-
-  test('TC-F3-13: Malformed carousel indexes do not crash controls', async ({ page }) => {
+  test('TC-F3-06: a failed carousel module offers a working reload', async ({ page }) => {
+    let attempts = 0;
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
-
-    const container = page.locator('#carousel-container');
-    const imageButton = container.locator('.carousel-slide.active .carousel-image-btn');
-    await imageButton.evaluate(button => {
-      button.dataset.projectIndex = 'not-a-number';
+    await page.route('**/_astro/carousel.*.js*', route => {
+      attempts += 1;
+      return attempts === 1 ? route.abort() : route.continue();
     });
-    await imageButton.click();
+    await page.goto('/');
+    await page.locator('#carousel-container').scrollIntoViewIfNeeded();
 
-    await expect(page.locator('#carousel-lightbox')).toBeHidden();
-    await container.locator('#carousel-next').click();
-    await expect(container.locator('.carousel-slide.active .carousel-title')).toHaveText(mockCarouselData[1].title);
+    await expect(page.locator('#carousel-status')).toContainText('failed to load');
+    await page.locator('#carousel-reload').click();
+    await expect(page.locator('#carousel-container')).toHaveAttribute('data-carousel-ready', 'true');
+    expect(attempts).toBe(2);
     expect(pageErrors).toEqual([]);
   });
-
 });

@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Carousel from '../components/Carousel.astro';
+import ProjectCards from '../components/ProjectCards.astro';
 import { getPublishedPosts, readingTimeMinutes } from '../lib/posts';
 import { personSchema, websiteSchema } from '../lib/schema';
 
@@ -29,7 +30,7 @@ const latestPosts = (await getPublishedPosts())
       <p class="text-lg text-zinc-400 max-w-3xl leading-relaxed">
         Leveraging automation, machine learning, and high-performance system engineering to build resilient, self-healing platforms.
       </p>
-      <p class="text-sm text-zinc-500 font-mono">// Based in Edinburgh, Scotland</p>
+      <p class="text-sm text-zinc-400 font-mono">// Based in Edinburgh, Scotland</p>
       <div class="flex flex-wrap gap-3 pt-1">
         <a
           href="mailto:hey@allisterantosik.com"
@@ -76,7 +77,7 @@ const latestPosts = (await getPublishedPosts())
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Latest Writing</h2>
-            <p class="text-sm text-zinc-500 font-mono mt-1">Recent notes on reliability, tooling, and automation</p>
+            <p class="text-sm text-zinc-400 font-mono mt-1">Recent notes on reliability, tooling, and automation</p>
           </div>
           <a
             href="/blog/"
@@ -90,7 +91,7 @@ const latestPosts = (await getPublishedPosts())
           {latestPosts.map((post) => (
             <article class="p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
               <div class="flex flex-col gap-2">
-                <div class="flex justify-between items-center gap-2 text-xs text-zinc-500 font-mono">
+                <div class="flex justify-between items-center gap-2 text-xs text-zinc-400 font-mono">
                   <span>
                     {new Date(post.data.pubDate).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -129,119 +130,13 @@ const latestPosts = (await getPublishedPosts())
     </section>
 
 
-    <!-- Dynamic Projects Section -->
+    <!-- Open source projects -->
     <section class="border-t border-zinc-800 pt-8 flex flex-col gap-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Open Source Projects</h2>
-        <span class="text-xs text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800 font-mono">
-          HTMX Dynamic Load
-        </span>
-      </div>
-
-      <div id="projects-list" hx-get="/api/projects/" hx-trigger="revealed" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        <!-- Spinner/Skeleton Loader shown while HTMX is fetching -->
-        <div class="col-span-full py-12 flex flex-col items-center justify-center gap-3 text-zinc-500 font-mono border border-dashed border-zinc-800 rounded">
-          <svg class="animate-spin h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Loading projects from endpoint...</span>
-        </div>
+      <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Open Source Projects</h2>
+      <div id="projects-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <ProjectCards />
       </div>
     </section>
-
-    <script is:inline>
-      (() => {
-        const projectsList = document.getElementById('projects-list');
-        if (!projectsList) return;
-
-        const renderFallback = () => {
-          const projectsList = document.getElementById('projects-list');
-          if (projectsList) {
-            // Offline fallback mirrors first two live projects from /api/projects
-            projectsList.innerHTML = `
-              <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
-                <div class="flex flex-col gap-2">
-                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">monzo-mcp</h3>
-                  <p class="text-sm text-zinc-400 leading-relaxed">Exposes Monzo's API to MCP clients (Claude Desktop, etc.) over stdio.</p>
-                </div>
-                <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
-                  <div class="flex gap-4">
-                    <span>Language: <strong class="text-emerald-400">TypeScript</strong></span>
-                  </div>
-                  <span><a href="https://github.com/allistera/monzo-mcp" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300">allistera/monzo-mcp</a></span>
-                </div>
-              </div>
-              <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
-                <div class="flex flex-col gap-2">
-                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">daily-news</h3>
-                  <p class="text-sm text-zinc-400 leading-relaxed">A small Python service that assembles a daily email newsletter from a set of sources and delivers it with Resend.</p>
-                </div>
-                <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
-                  <div class="flex gap-4">
-                    <span>Language: <strong class="text-emerald-400">Python</strong></span>
-                  </div>
-                  <span><a href="https://github.com/allistera/daily-news" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300">allistera/daily-news</a></span>
-                </div>
-              </div>
-            `;
-          }
-        };
-
-        let fallbackTimer;
-        const isProjectsRequest = (event) => event.detail?.elt?.id === 'projects-list';
-        const clearFallbackTimer = () => {
-          if (fallbackTimer) {
-            window.clearTimeout(fallbackTimer);
-            fallbackTimer = undefined;
-          }
-        };
-        const scheduleFallback = (event) => {
-          if (!isProjectsRequest(event)) return;
-          clearFallbackTimer();
-          fallbackTimer = window.setTimeout(renderFallback, 3100);
-        };
-        const showFallback = () => {
-          clearFallbackTimer();
-          renderFallback();
-        };
-
-        document.addEventListener('htmx:beforeRequest', scheduleFallback);
-        document.addEventListener('htmx:afterRequest', clearFallbackTimer);
-        document.addEventListener('htmx:responseError', showFallback);
-        document.addEventListener('htmx:sendError', showFallback);
-        document.addEventListener('htmx:timeout', showFallback);
-
-        let loadingHtmx = false;
-        const loadProjects = () => {
-          if (loadingHtmx || window.htmx) return;
-          loadingHtmx = true;
-
-          const script = document.createElement('script');
-          script.src = '/vendor/htmx.min.js';
-          script.integrity = 'sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+';
-          script.crossOrigin = 'anonymous';
-          script.addEventListener('load', () => {
-            window.htmx.config.timeout = 3000;
-            window.htmx.process(projectsList);
-            window.htmx.trigger(projectsList, 'revealed');
-          }, { once: true });
-          script.addEventListener('error', showFallback, { once: true });
-          document.head.appendChild(script);
-        };
-
-        if ('IntersectionObserver' in window) {
-          const observer = new IntersectionObserver((entries) => {
-            if (!entries.some((entry) => entry.isIntersecting)) return;
-            observer.disconnect();
-            loadProjects();
-          }, { rootMargin: '400px 0px' });
-          observer.observe(projectsList);
-        } else {
-          loadProjects();
-        }
-      })();
-    </script>
 
     <!-- Contact / hire CTA -->
     <section

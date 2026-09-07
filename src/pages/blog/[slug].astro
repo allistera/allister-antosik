@@ -66,7 +66,7 @@ const title = pageTitle(post.data.title);
 
     <!-- Article Header -->
     <header class="flex flex-col gap-3 pb-6 border-b border-zinc-800">
-      <div class="flex items-center gap-4 text-xs text-zinc-500 font-mono">
+      <div class="flex items-center gap-4 text-xs text-zinc-400 font-mono">
         <time datetime={new Date(post.data.pubDate).toISOString()}>
           {new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </time>
@@ -101,7 +101,7 @@ const title = pageTitle(post.data.title);
               href={`/blog/${rel.id}/`}
               class="group p-4 rounded bg-zinc-900 border border-zinc-800 hover:border-emerald-500 transition-colors flex flex-col gap-2"
             >
-              <span class="text-xs text-zinc-500 font-mono">
+              <span class="text-xs text-zinc-400 font-mono">
                 {new Date(rel.data.pubDate).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'short',
@@ -111,7 +111,7 @@ const title = pageTitle(post.data.title);
               <span class="text-sm font-bold text-zinc-100 font-mono group-hover:text-emerald-400 transition-colors leading-snug">
                 {rel.data.title}
               </span>
-              <span class="text-xs text-zinc-500 line-clamp-2">{rel.data.description}</span>
+              <span class="text-xs text-zinc-400 line-clamp-2">{rel.data.description}</span>
             </a>
           ))}
         </div>
@@ -193,6 +193,16 @@ const title = pageTitle(post.data.title);
   }
   article li {
     margin-bottom: 0.5rem;
+  }
+
+  article {
+    overflow-x: auto;
+  }
+
+  article table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   /* Shiki code blocks — keep chrome only; token colors come from Shiki inline styles */

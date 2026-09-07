@@ -1,7 +1,6 @@
-import { instrumentHtmx, trackEvent, trackPageView } from '../lib/telemetry';
+import { trackEvent, trackPageView } from '../lib/telemetry';
 
 trackPageView();
-instrumentHtmx();
 
 // Carousel interactions (homepage)
 document.addEventListener(

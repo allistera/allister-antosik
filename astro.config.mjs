@@ -4,9 +4,15 @@ import sentry from '@sentry/astro';
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
+import { loadEnv } from 'vite';
 import { getBlogLastmod } from './src/lib/blog-lastmod.mjs';
 
 const blogLastmod = getBlogLastmod(new URL('./src/content/blog/', import.meta.url));
+const env = {
+  ...loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), ''),
+  ...process.env,
+};
+const sentryEnabled = Boolean(env.PUBLIC_SENTRY_DSN);
 
 // https://astro.build/config
 export default defineConfig({
@@ -31,21 +37,19 @@ export default defineConfig({
       // Inherit markdown.shikiConfig from the root markdown config
       syntaxHighlight: 'shiki',
     }),
-    // Runtime SDK options live in sentry.client.config.ts / sentry.server.config.ts
-    sentry({
-      // Source map upload (set SENTRY_AUTH_TOKEN + SENTRY_ORG in CI/Vercel)
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT || 'bloggy',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      // Skip upload when no token (local/dev builds still succeed)
-      sourcemaps: {
-        disable: !process.env.SENTRY_AUTH_TOKEN,
-      },
-      telemetry: false,
-    }),
+    ...(sentryEnabled
+      ? [sentry({
+        // Runtime SDK options live in the sentry.*.config.ts files.
+        org: env.SENTRY_ORG,
+        project: env.SENTRY_PROJECT || 'bloggy',
+        authToken: env.SENTRY_AUTH_TOKEN,
+        sourcemaps: {
+          disable: !env.SENTRY_AUTH_TOKEN,
+        },
+        telemetry: false,
+      })]
+      : []),
     sitemap({
-      // HTMX partial endpoint — not a public page
-      filter: (page) => !page.includes('/api/'),
       serialize(item) {
         const lastmod = blogLastmod.get(new URL(item.url).pathname);
         return lastmod ? { ...item, lastmod } : item;

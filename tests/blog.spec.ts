@@ -199,6 +199,21 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     ).toBeVisible();
   });
 
+  test('TC-F4-14: wide article tables stay within the mobile page', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto('/blog/self-hosted-ai-developer-stack/');
+
+    const table = page.locator('article table').first();
+    await expect(table).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+
+    const dimensions = await table.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
+  });
+
 
   // TC-F4-10: Blog 404 Routing
   test('TC-F4-10: Blog 404 Routing', async ({ page }) => {

@@ -2,18 +2,20 @@
 
 ## Project Structure & Module Organization
 
-This is an Astro 7 portfolio and blog deployed to Vercel. Application code lives in `src/`: reusable UI in `src/components/`, page routes and the `/api/projects` endpoint in `src/pages/`, shared layout in `src/layouts/`, global styles in `src/styles/`, and telemetry helpers in `src/lib/` and `src/scripts/`. Blog posts are MDX files in `src/content/blog/`; update carousel entries in `src/data/carousel.json`. Browser tests live in `tests/`, with shared fixtures in `tests/helpers/`.
+This is an Astro 7 static portfolio and blog deployed to Vercel. Application code lives in `src/`: reusable UI in `src/components/`, page routes in `src/pages/`, shared layout in `src/layouts/`, global styles in `src/styles/`, and telemetry helpers in `src/lib/` and `src/scripts/`. Blog posts are MDX files in `src/content/blog/`; update carousel entries in `src/data/carousel.json`. Browser tests live in `tests/`.
 
 ## Build, Test, and Development Commands
 
 - `npm install` installs the locked dependencies from `package-lock.json`.
 - `npm run dev` starts the Astro development server.
-- `npm run build` produces the production/Vercel output and catches Astro and TypeScript build errors.
+- `npm run lint` runs ESLint across Astro, TypeScript, and JavaScript source files.
+- `npm run typecheck` checks repository TypeScript and JavaScript with TypeScript 7.
+- `npm run build` produces the production/Vercel output and builds the Pagefind index.
 - `npm run preview` serves the production build locally.
 - `npm test` (or `npm run test:e2e`) runs the Playwright suite across configured desktop and mobile browsers. Run `npx playwright install` once when browser binaries are missing.
 - `npm run test:e2e:ui` opens Playwright's interactive test runner; `npm run test:e2e:report` opens its latest report.
 
-There is no standalone lint script. Run `npm run build` as the required static check after every change, then run the relevant Playwright tests; run the full suite for cross-page or shared-component work.
+Run `npm run lint`, `npm run typecheck`, `npm run test:unit`, and `npm run build` before completion, then run the relevant Playwright tests; run the full suite for cross-page or shared-component work.
 
 ## Coding Style & Naming Conventions
 

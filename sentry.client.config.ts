@@ -9,9 +9,14 @@ Sentry.init({
   tracesSampleRate: hasDsn ? (import.meta.env.PROD ? 0.2 : 1.0) : 0,
   replaysSessionSampleRate: hasDsn ? 0.1 : 0,
   replaysOnErrorSampleRate: hasDsn ? 1.0 : 0,
-  // Structured logs + application metrics — only when Sentry is active
-  enableLogs: hasDsn,
-  enableMetrics: hasDsn,
+  // Sentry 11 collects PII by default; keep the v10 (sendDefaultPii: false) behaviour
+  dataCollection: {
+    userInfo: false,
+    cookies: false,
+    httpHeaders: false,
+    httpBodies: [],
+    urlQueryParams: false,
+  },
   integrations: hasDsn
     ? [
         Sentry.browserTracingIntegration(),

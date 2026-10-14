@@ -47,7 +47,7 @@ Error monitoring via [`@sentry/astro`](https://docs.sentry.io/platforms/javascri
 
 Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, and the conditional `sentry()` integration in `astro.config.mjs`. When `PUBLIC_SENTRY_DSN` is empty, Sentry and the application telemetry entry point are excluded from the browser build.
 
-**Logs & metrics** are enabled (`enableLogs` / `enableMetrics`):
+**Logs & metrics** are opt-in by usage (Sentry 11 removed `enableLogs` / `enableMetrics`); `dataCollection` is set to the restrictive v10 defaults so no user IPs, cookies, headers, bodies, or query strings are collected:
 
 - Console calls are forwarded via `consoleLoggingIntegration`
 - Page views and carousel navigation emit `Sentry.logger` + `Sentry.metrics`

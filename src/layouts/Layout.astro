@@ -41,6 +41,7 @@ const telemetryEnabled = Boolean(import.meta.env.PUBLIC_SENTRY_DSN);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#09090b" />
     <meta name="msapplication-TileColor" content="#09090b" />
     <meta name="msapplication-TileImage" content="/icon-192.png" />
@@ -95,7 +96,13 @@ const telemetryEnabled = Boolean(import.meta.env.PUBLIC_SENTRY_DSN);
     ))}
 
   </head>
-  <body class="bg-zinc-950 text-zinc-50 min-h-screen flex flex-col w-full font-mono">
+  <body class="bg-zinc-950 text-zinc-50 min-h-dvh flex flex-col w-full font-mono">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-zinc-950 focus:outline-none"
+    >
+      Skip to content
+    </a>
     <div class="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Pagefind indexes regions marked data-pagefind-body (see page mains) -->
       <slot />

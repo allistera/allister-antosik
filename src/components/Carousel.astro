@@ -26,7 +26,7 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
   data-carousel-items={JSON.stringify(staticData)}
   data-carousel-placeholder={placeholder}
   data-carousel-ready="false"
-  class="relative w-full border border-zinc-800 rounded bg-zinc-950 p-6 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+  class="relative w-full border border-zinc-800 rounded bg-zinc-950 p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
 >
   <div class="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800 rounded-t -mx-6 -mt-6 mb-6">
     <div class="w-3 h-3 rounded-full bg-red-500"></div>
@@ -48,7 +48,7 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
             <div class="w-full md:w-1/2 flex flex-col justify-center">
               <button
                 type="button"
-                class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 data-project-index={index}
                 data-image-index="0"
                 aria-label={`Open screenshot: ${item.title}`}
@@ -70,9 +70,9 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
                 </span>
               </button>
               <div class:list={['carousel-image-controls mt-3 flex items-center justify-center gap-3', { hidden: !hasMultipleImages }]} aria-label={`${item.title} screenshots`}>
-                <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index={index} aria-label={`Previous ${item.title} screenshot`}>&lt; Prev image</button>
+                <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500" data-project-index={index} aria-label={`Previous ${item.title} screenshot`}>&lt; Prev image</button>
                 <span class="carousel-image-counter font-mono text-xs text-zinc-400" aria-live="polite">1 / {item.images.length}</span>
-                <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index={index} aria-label={`Next ${item.title} screenshot`}>Next image &gt;</button>
+                <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500" data-project-index={index} aria-label={`Next ${item.title} screenshot`}>Next image &gt;</button>
               </div>
             </div>
             <div class="w-full md:w-1/2 flex flex-col gap-4">
@@ -80,7 +80,7 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
               <p class="carousel-description text-sm text-zinc-400 leading-relaxed">{item.description}</p>
               <div class="pt-2">
                 {item.link
-                  ? <a href={item.link} target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>
+                  ? <a href={item.link} target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">View Repository</a>
                   : <span class="carousel-link inline-block px-4 py-2 bg-zinc-900 text-zinc-600 font-mono text-xs rounded opacity-50 cursor-not-allowed border border-zinc-800">No Link Available</span>}
               </div>
             </div>
@@ -91,23 +91,23 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
   </div>
 
   <div id="carousel-controls" class:list={['flex justify-between items-center mt-6 pt-4 border-t border-zinc-900', { hidden: staticData.length <= 1 }]}>
-    <button id="carousel-prev" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">&lt; Prev</button>
+    <button id="carousel-prev" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500">&lt; Prev</button>
     <div id="carousel-dots" class="flex gap-2">
       {staticData.map((_, index) => (
         <button
           type="button"
-          class:list={['carousel-dot w-6 h-6 rounded-full border-4 border-zinc-950 bg-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500', { 'active bg-emerald-400': index === 0 }]}
+          class:list={['carousel-dot w-6 h-6 rounded-full border-4 border-zinc-950 bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500', { 'active bg-emerald-400': index === 0 }]}
           data-carousel-dot={index}
           aria-label={`Go to slide ${index + 1}`}
           aria-current={index === 0 ? 'true' : undefined}
         ></button>
       ))}
     </div>
-    <button id="carousel-next" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">Next &gt;</button>
+    <button id="carousel-next" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500">Next &gt;</button>
   </div>
   <p id="carousel-status" class="hidden mt-4 text-sm text-amber-300" role="status">
     Carousel controls failed to load.
-    <button id="carousel-reload" type="button" class="ml-2 rounded border border-amber-400 px-2 py-1 font-bold hover:bg-amber-400 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-amber-300">
+    <button id="carousel-reload" type="button" class="ml-2 rounded border border-amber-400 px-2 py-1 font-bold hover:bg-amber-400 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
       Reload carousel
     </button>
   </p>
@@ -115,21 +115,21 @@ const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/
 
 <dialog
   id="carousel-lightbox"
-  class="fixed inset-0 z-50 m-0 h-screen max-h-none w-screen max-w-none bg-transparent p-4 open:flex open:items-center open:justify-center backdrop:bg-zinc-950/90 backdrop:backdrop-blur-sm sm:p-8"
+  class="fixed inset-0 z-50 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-4 open:flex open:items-center open:justify-center backdrop:bg-zinc-950/90 backdrop:backdrop-blur-sm sm:p-8"
   aria-labelledby="carousel-lightbox-title"
 >
   <div class="relative z-10 flex w-full max-w-5xl max-h-[90vh] flex-col gap-3 rounded border border-zinc-700 bg-zinc-900 shadow-2xl shadow-emerald-500/10">
     <div class="flex items-center justify-between gap-4 border-b border-zinc-800 px-4 py-3">
       <h3 id="carousel-lightbox-title" class="truncate font-mono text-sm font-bold text-emerald-400 sm:text-base"></h3>
-      <button type="button" id="carousel-lightbox-close" class="shrink-0 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:border-emerald-500 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">Close [Esc]</button>
+      <button type="button" id="carousel-lightbox-close" class="shrink-0 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:border-emerald-500 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Close [Esc]</button>
     </div>
     <div class="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 pb-2">
       <img id="carousel-lightbox-image" src="" alt="" class="max-h-[70vh] w-auto max-w-full rounded border border-zinc-800 object-contain" />
     </div>
     <div class="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
-      <button type="button" id="carousel-lightbox-prev" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">&lt; Prev</button>
+      <button type="button" id="carousel-lightbox-prev" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">&lt; Prev</button>
       <p id="carousel-lightbox-caption" class="hidden text-center font-mono text-xs text-zinc-400 sm:block sm:max-w-md sm:truncate"></p>
-      <button type="button" id="carousel-lightbox-next" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">Next &gt;</button>
+      <button type="button" id="carousel-lightbox-next" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Next &gt;</button>
     </div>
   </div>
 </dialog>

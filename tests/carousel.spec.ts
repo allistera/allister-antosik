@@ -94,16 +94,19 @@ test.describe('Screenshot carousel', () => {
     await page.goto('/');
     await page.locator('#carousel-container').scrollIntoViewIfNeeded();
 
-    await expect(page.locator('#carousel-status')).toContainText('failed to load');
+    const status = page.locator('#carousel-status');
+    await expect(status).toBeVisible();
+    await expect(status).toContainText('failed to load');
     expect(attempts).toBe(1);
 
-    // Hovering the reload button re-enters the container, which may retry the import before the click lands.
+    // Hovering or focusing the reload button re-enters the container, which retries the import and can
+    // hide the status before a pointer click lands, so dispatch the click directly.
     await Promise.all([
       page.waitForEvent('load'),
-      page.locator('#carousel-reload').click(),
+      page.locator('#carousel-reload').dispatchEvent('click'),
     ]);
     await expect(page.locator('#carousel-container')).toHaveAttribute('data-carousel-ready', 'true');
-    expect(attempts).toBeGreaterThanOrEqual(2);
+    expect(attempts).toBe(2);
     expect(pageErrors).toEqual([]);
   });
 });

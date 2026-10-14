@@ -19,11 +19,11 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
 >
   <Header />
 
-  <main class="py-12 flex-1 flex flex-col gap-8 w-full" data-pagefind-body>
+  <main id="main-content" class="py-12 flex-1 flex flex-col gap-8 w-full" data-pagefind-body>
     <section class="flex flex-col gap-4">
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div class="flex flex-col gap-4">
-          <h1 class="text-4xl font-extrabold tracking-tight text-emerald-400">
+          <h1 class="text-4xl font-extrabold tracking-tight text-emerald-400 text-balance">
             &gt;_ SRE & AIOps Insights
           </h1>
           <p class="text-zinc-400 max-w-2xl leading-relaxed">
@@ -32,7 +32,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
         </div>
         <a
           href="/rss.xml"
-          class="text-sm font-mono text-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded p-1 self-start sm:self-auto"
+          class="text-sm font-mono text-emerald-400 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1 self-start sm:self-auto"
         >
           RSS feed →
         </a>
@@ -41,17 +41,21 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
 
     <!-- Tag Cloud -->
     {allTags.length > 0 && (
-      <section class="flex flex-wrap gap-2 py-2 border-y border-zinc-900">
-        <span class="text-xs text-zinc-400 font-mono self-center mr-2">Filter by Tag:</span>
-        <button 
-          class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500" 
-          data-tag="all">
+      <section class="flex flex-wrap gap-2 py-2 border-y border-zinc-900" role="group" aria-label="Filter posts by tag">
+        <span class="text-xs text-zinc-400 font-mono self-center mr-2" aria-hidden="true">Filter by Tag:</span>
+        <button
+          type="button"
+          class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          data-tag="all"
+          aria-pressed="true">
           [ All ]
         </button>
         {allTags.map(tag => (
-          <button 
-            class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-emerald-500 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500" 
-            data-tag={tag}>
+          <button
+            type="button"
+            class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-emerald-500 hover:text-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            data-tag={tag}
+            aria-pressed="false">
             #{tag}
           </button>
         ))}
@@ -75,7 +79,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
                 <span class="reading-time">{post.readingTime}</span>
               </div>
               <a href={`/blog/${post.id}/`} class="group">
-                <h2 class="text-xl font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors">
+                <h2 class="text-xl font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors text-balance">
                   {post.data.title}
                 </h2>
               </a>
@@ -108,7 +112,9 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
 
           // Highlight selected filter button
           filterButtons.forEach(b => {
-            if (b === btn) {
+            const selected = b === btn;
+            b.setAttribute('aria-pressed', String(selected));
+            if (selected) {
               b.classList.add('bg-emerald-500', 'text-zinc-950', 'font-bold');
               b.classList.remove('bg-zinc-900', 'text-zinc-400', 'border-zinc-800');
             } else {

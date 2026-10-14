@@ -227,6 +227,28 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     const returnBtn = page.locator('text=Return to Blog');
     await expect(returnBtn).toBeVisible();
     await expect(returnBtn).toHaveAttribute('href', '/blog/');
+
+    const homeBtn = page.locator('main a', { hasText: 'Go home' });
+    await expect(homeBtn).toBeVisible();
+    await expect(homeBtn).toHaveAttribute('href', '/');
+  });
+
+  // TC-F4-15: Tag filter buttons expose their pressed state
+  test('TC-F4-15: Tag filter buttons expose their pressed state', async ({ page }) => {
+    await page.goto('/blog/');
+
+    const allButton = page.locator('.tag-filter-btn[data-tag="all"]');
+    const tagButton = page.locator('.tag-filter-btn[data-tag="Kubernetes"]');
+    await expect(allButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(tagButton).toHaveAttribute('aria-pressed', 'false');
+
+    await tagButton.click();
+    await expect(tagButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(allButton).toHaveAttribute('aria-pressed', 'false');
+
+    await allButton.click();
+    await expect(allButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#blog-posts-list .blog-post-card.hidden')).toHaveCount(0);
   });
 
 });

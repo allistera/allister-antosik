@@ -135,6 +135,26 @@ test.describe('Feature 1: Portfolio Showcase Homepage (R1) - Tier 1 & Tier 2', (
     await expect(focusedElement).toBeVisible();
   });
 
+  // TC-F1-11: Skip link and current-page navigation state
+  test('TC-F1-11: Skip link and current-page navigation state', async ({ page }) => {
+    const skipLink = page.locator('a[href="#main-content"]');
+    await expect(skipLink).toHaveText('Skip to content');
+    await expect(skipLink).not.toBeInViewport();
+
+    await skipLink.focus();
+    await expect(skipLink).toBeInViewport();
+    await skipLink.press('Enter');
+    await expect(page).toHaveURL(/#main-content$/);
+    await expect(page.locator('main#main-content')).toBeVisible();
+
+    await expect(page.locator('header nav a[href="/"]')).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('header nav a[href="/blog/"]')).not.toHaveAttribute('aria-current', 'page');
+
+    await page.goto('/blog/');
+    await expect(page.locator('header nav a[href="/blog/"]')).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('header nav a[href="/"]')).not.toHaveAttribute('aria-current', 'page');
+  });
+
   // TC-F1-10: SEO & Viewport Meta Tags
   test('TC-F1-10: SEO & Viewport Meta Tags', async ({ page }) => {
     // Viewport configuration

@@ -56,10 +56,10 @@ const title = pageTitle(post.data.title);
 >
   <Header />
 
-  <main class="py-12 flex-1 flex flex-col gap-6 w-full max-w-3xl mx-auto" data-pagefind-body>
+  <main id="main-content" class="py-12 flex-1 flex flex-col gap-6 w-full max-w-3xl mx-auto" data-pagefind-body>
     <!-- Breadcrumb / Back Link -->
     <div class="mb-4">
-      <a href="/blog/" class="text-emerald-400 hover:text-emerald-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 p-1 rounded">
+      <a href="/blog/" class="text-emerald-400 hover:text-emerald-300 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 p-1 rounded">
         &lt;_ Back to Blog
       </a>
     </div>
@@ -70,15 +70,15 @@ const title = pageTitle(post.data.title);
         <time datetime={new Date(post.data.pubDate).toISOString()}>
           {new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </time>
-        <span>•</span>
+        <span aria-hidden="true">•</span>
         <span>{readingTime} min read</span>
       </div>
-      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-zinc-100 font-mono">
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-zinc-100 font-mono text-balance">
         {post.data.title}
       </h1>
       
       <!-- Tags -->
-      <div class="flex flex-wrap gap-2 pt-2">
+      <div class="flex flex-wrap gap-2 pt-2" aria-label="Tags">
         {post.data.tags.map((tag: string) => (
           <span class="px-2.5 py-0.5 text-xs font-mono rounded bg-zinc-900 text-emerald-400 border border-zinc-800">
             #{tag}
@@ -88,7 +88,7 @@ const title = pageTitle(post.data.title);
     </header>
 
     <!-- Markdown Content Body -->
-    <article class="prose prose-invert prose-emerald max-w-none text-zinc-300 leading-relaxed font-sans space-y-6 pt-6">
+    <article class="max-w-none text-zinc-300 font-sans text-[1.0625rem] leading-relaxed pt-6">
       <Content />
     </article>
 
@@ -171,12 +171,13 @@ const title = pageTitle(post.data.title);
 <style is:global>
   /* Markdown content styling overrides */
   article h1, article h2, article h3, article h4 {
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-weight: 700;
     color: rgb(244, 244, 245);
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     margin-bottom: 0.75rem;
-    tracking: -0.025em;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
   }
   article h1 { font-size: 2.25rem; }
   article h2 { font-size: 1.5rem; border-left: 3px solid rgb(52, 211, 153); padding-left: 0.75rem; }
@@ -184,6 +185,31 @@ const title = pageTitle(post.data.title);
   
   article p {
     margin-bottom: 1.25rem;
+    text-wrap: pretty;
+  }
+  article a {
+    color: rgb(52, 211, 153);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  article a:hover {
+    color: rgb(110, 231, 183);
+  }
+  article ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  article blockquote {
+    border-left: 3px solid rgb(63, 63, 70);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: rgb(161, 161, 170);
+  }
+  article img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
   }
 
   article ul {
@@ -211,7 +237,7 @@ const title = pageTitle(post.data.title);
     padding: 1rem;
     border-radius: 0.25rem;
     overflow-x: auto;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1.6;
     margin-bottom: 0;
@@ -226,7 +252,7 @@ const title = pageTitle(post.data.title);
   }
   /* Inline code only (not Shiki tokens inside pre) */
   article :not(pre) > code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono);
     color: rgb(110, 231, 183);
     background-color: rgb(24, 24, 27);
     padding: 0.125rem 0.25rem;
@@ -243,7 +269,7 @@ const title = pageTitle(post.data.title);
     top: 0.5rem;
     right: 0.5rem;
     z-index: 1;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     line-height: 1;
     padding: 0.35rem 0.55rem;

@@ -21,26 +21,26 @@ const latestPosts = (await getPublishedPosts())
 >
   <Header />
 
-  <main class="py-12 flex-1 flex flex-col gap-12 w-full" data-pagefind-body>
+  <main id="main-content" class="py-12 flex-1 flex flex-col gap-12 w-full" data-pagefind-body>
     <!-- Hero / Role Section -->
     <section class="flex flex-col gap-4">
-      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-emerald-400">
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-emerald-400 text-balance">
         Lead SRE & AIOps Engineer
       </h1>
-      <p class="text-lg text-zinc-400 max-w-3xl leading-relaxed">
+      <p class="text-lg text-zinc-400 max-w-3xl leading-relaxed text-pretty">
         Leveraging automation, machine learning, and high-performance system engineering to build resilient, self-healing platforms.
       </p>
       <p class="text-sm text-zinc-400 font-mono">// Based in Edinburgh, Scotland</p>
       <div class="flex flex-wrap gap-3 pt-1">
         <a
           href="mailto:hey@allisterantosik.com"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           Get in touch
         </a>
         <a
           href="/blog/"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded border border-zinc-700 text-zinc-300 font-mono text-sm hover:border-emerald-500 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded border border-zinc-700 text-zinc-300 font-mono text-sm hover:border-emerald-500 hover:text-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           Read the blog
         </a>
@@ -50,7 +50,7 @@ const latestPosts = (await getPublishedPosts())
     <!-- Professional Background Section -->
     <section class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-zinc-800 pt-8">
       <div>
-        <h2 class="text-2xl font-bold text-zinc-200 mb-4">&gt;_ Background</h2>
+        <h2 class="text-2xl font-bold text-zinc-200 mb-4 text-balance">&gt;_ Background</h2>
         <p class="text-zinc-400 leading-relaxed mb-4">
           With extensive experience as a <strong class="text-emerald-300">senior developer</strong> and <strong class="text-emerald-300">DevOps engineer</strong>, I bridge the gap between application design and infrastructure reliability.
         </p>
@@ -61,7 +61,7 @@ const latestPosts = (await getPublishedPosts())
 
       <!-- Design Philosophy Section -->
       <div>
-        <h2 class="text-2xl font-bold text-zinc-200 mb-4">&gt;_ Design Philosophy</h2>
+        <h2 class="text-2xl font-bold text-zinc-200 mb-4 text-balance">&gt;_ Design Philosophy</h2>
         <p class="text-zinc-400 leading-relaxed mb-4">
           My approach is rooted in <strong class="text-emerald-300">simplicity</strong>. I strictly adhere to the <strong class="text-emerald-300">KISS (Keep It Simple, Stupid)</strong> principle when designing both software and infrastructure architecture.
         </p>
@@ -76,12 +76,12 @@ const latestPosts = (await getPublishedPosts())
       <section class="border-t border-zinc-800 pt-8 flex flex-col gap-6">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Latest Writing</h2>
+            <h2 class="text-2xl font-bold text-zinc-200 text-balance">&gt;_ Latest Writing</h2>
             <p class="text-sm text-zinc-400 font-mono mt-1">Recent notes on reliability, tooling, and automation</p>
           </div>
           <a
             href="/blog/"
-            class="text-sm font-mono text-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded p-1 self-start sm:self-auto"
+            class="text-sm font-mono text-emerald-400 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1 self-start sm:self-auto"
           >
             View all posts →
           </a>
@@ -102,7 +102,7 @@ const latestPosts = (await getPublishedPosts())
                   <span>{post.readingTime}</span>
                 </div>
                 <a href={`/blog/${post.id}/`} class="group">
-                  <h3 class="text-lg font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors">
+                  <h3 class="text-lg font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors text-balance">
                     {post.data.title}
                   </h3>
                 </a>
@@ -125,14 +125,14 @@ const latestPosts = (await getPublishedPosts())
 
     <!-- Interactive Project Showcase Section -->
     <section class="border-t border-zinc-800 pt-8 flex flex-col gap-6">
-      <h2 class="text-2xl font-bold text-zinc-200">&gt;_ System Showcase</h2>
+      <h2 class="text-2xl font-bold text-zinc-200 text-balance">&gt;_ System Showcase</h2>
       <Carousel />
     </section>
 
 
     <!-- Open source projects -->
     <section class="border-t border-zinc-800 pt-8 flex flex-col gap-6">
-      <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Open Source Projects</h2>
+      <h2 class="text-2xl font-bold text-zinc-200 text-balance">&gt;_ Open Source Projects</h2>
       <div id="projects-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         <ProjectCards />
       </div>
@@ -144,7 +144,7 @@ const latestPosts = (await getPublishedPosts())
       data-pagefind-ignore
     >
       <div class="flex flex-col gap-2 max-w-xl">
-        <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Let's work together</h2>
+        <h2 class="text-2xl font-bold text-zinc-200 text-balance">&gt;_ Let's work together</h2>
         <p class="text-zinc-400 leading-relaxed">
           Open to SRE, platform, and reliability consulting, contract work, and interesting collaborations.
           Drop a line — I read every message.
@@ -152,7 +152,7 @@ const latestPosts = (await getPublishedPosts())
       </div>
       <a
         href="mailto:hey@allisterantosik.com?subject=Hello%20from%20allisterantosik.com"
-        class="inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        class="inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
       >
         hey@allisterantosik.com
       </a>

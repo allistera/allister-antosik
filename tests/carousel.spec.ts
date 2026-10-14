@@ -95,9 +95,15 @@ test.describe('Screenshot carousel', () => {
     await page.locator('#carousel-container').scrollIntoViewIfNeeded();
 
     await expect(page.locator('#carousel-status')).toContainText('failed to load');
-    await page.locator('#carousel-reload').click();
+    expect(attempts).toBe(1);
+
+    // Hovering the reload button re-enters the container, which may retry the import before the click lands.
+    await Promise.all([
+      page.waitForEvent('load'),
+      page.locator('#carousel-reload').click(),
+    ]);
     await expect(page.locator('#carousel-container')).toHaveAttribute('data-carousel-ready', 'true');
-    expect(attempts).toBe(2);
+    expect(attempts).toBeGreaterThanOrEqual(2);
     expect(pageErrors).toEqual([]);
   });
 });

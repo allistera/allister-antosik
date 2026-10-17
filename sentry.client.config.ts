@@ -13,7 +13,7 @@ Sentry.init({
   dataCollection: {
     userInfo: false,
     cookies: false,
-    httpHeaders: false,
+    httpHeaders: { request: false, response: false },
     httpBodies: [],
     urlQueryParams: false,
   },

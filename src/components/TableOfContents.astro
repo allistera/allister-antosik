@@ -1,0 +1,108 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+interface TocEntry extends MarkdownHeading {
+  children: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+
+// Build a two-level outline: h2 sections with their h3 subsections.
+const entries: TocEntry[] = [];
+for (const heading of headings) {
+  if (heading.depth === 2) {
+    entries.push({ ...heading, children: [] });
+  } else if (heading.depth === 3 && entries.length > 0) {
+    entries[entries.length - 1].children.push(heading);
+  }
+}
+
+const show = entries.length >= 2;
+---
+
+{show && (
+  <nav class="toc" aria-labelledby="toc-heading" data-pagefind-ignore>
+    <details open>
+      <summary id="toc-heading" class="toc-summary">&gt;_ Contents</summary>
+      <ol class="toc-list">
+        {entries.map((entry) => (
+          <li>
+            <a href={`#${entry.slug}`}>{entry.text}</a>
+            {entry.children.length > 0 && (
+              <ol class="toc-list toc-nested">
+                {entry.children.map((child) => (
+                  <li>
+                    <a href={`#${child.slug}`}>{child.text}</a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
+    </details>
+  </nav>
+)}
+
+<style>
+  .toc {
+    border: 1px solid rgb(39, 39, 42);
+    border-radius: 0.25rem;
+    background-color: rgb(24 24 27 / 0.5);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  .toc-summary {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: rgb(244, 244, 245);
+    list-style: none;
+  }
+  .toc-summary::-webkit-details-marker {
+    display: none;
+  }
+  .toc-summary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(16, 185, 129);
+    border-radius: 0.125rem;
+  }
+  .toc-summary::after {
+    content: '[-]';
+    margin-left: 0.5rem;
+    color: rgb(113, 113, 122);
+    font-weight: 400;
+  }
+  details:not([open]) > .toc-summary::after {
+    content: '[+]';
+  }
+  .toc-list {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  .toc-nested {
+    margin: 0.375rem 0 0;
+    padding-left: 1rem;
+    border-left: 1px solid rgb(39, 39, 42);
+  }
+  .toc a {
+    color: rgb(161, 161, 170);
+    text-decoration: none;
+    line-height: 1.4;
+  }
+  .toc a:hover,
+  .toc a:focus-visible {
+    color: rgb(52, 211, 153);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    outline: none;
+  }
+</style>

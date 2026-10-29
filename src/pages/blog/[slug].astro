@@ -3,6 +3,7 @@ import { render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
 import {
   getPublishedPosts,
   getRelatedPosts,
@@ -26,7 +27,7 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 const readingTime = readingTimeMinutes(post.body);
 
 // getPublishedPosts already called in getStaticPaths; in static build this
@@ -87,8 +88,10 @@ const title = pageTitle(post.data.title);
       </div>
     </header>
 
+    <TableOfContents headings={headings} />
+
     <!-- Markdown Content Body -->
-    <article class="max-w-none text-zinc-300 font-sans text-[1.0625rem] leading-relaxed pt-6">
+    <article class="max-w-none text-zinc-300 font-sans text-[1.0625rem] leading-relaxed">
       <Content />
     </article>
 
@@ -178,6 +181,9 @@ const title = pageTitle(post.data.title);
     margin-bottom: 0.75rem;
     letter-spacing: -0.025em;
     text-wrap: balance;
+  }
+  article h2, article h3, article h4 {
+    scroll-margin-top: 1.5rem;
   }
   article h1 { font-size: 2.25rem; }
   article h2 { font-size: 1.5rem; border-left: 3px solid rgb(52, 211, 153); padding-left: 0.75rem; }

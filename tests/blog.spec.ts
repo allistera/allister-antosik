@@ -277,4 +277,23 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     expect(cellStyle.borderWidth).toBeGreaterThan(0);
   });
 
+  // TC-F4-17: Table of contents links to article sections
+  test('TC-F4-17: Table of contents links to article sections', async ({ page }) => {
+    await page.goto('/blog/installing-openclaw-on-unraid/');
+
+    const toc = page.getByRole('navigation', { name: /contents/i });
+    await expect(toc).toBeVisible();
+
+    const firstLink = toc.locator('a').first();
+    const href = await firstLink.getAttribute('href');
+    expect(href).toMatch(/^#.+/);
+
+    // Heading ids can start with a digit, so match by attribute rather than a CSS id selector
+    const target = page.locator(`article [id="${href!.slice(1)}"]`);
+    await expect(target).toHaveCount(1);
+
+    await firstLink.click();
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+  });
+
 });

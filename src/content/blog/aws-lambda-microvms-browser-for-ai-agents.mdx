@@ -1,6 +1,6 @@
 ---
 title: "A Disposable Browser for AI Agents with AWS Lambda MicroVMs"
-description: "Run headless Chromium and Playwright MCP inside an AWS Lambda MicroVM so Claude Code, Codex, or a custom agent gets a hardware-isolated browser that suspends when idle and is thrown away afterwards."
+description: "Run headless Chromium and Playwright MCP inside an AWS Lambda MicroVM so Claude Code gets a hardware-isolated browser that suspends when idle and is thrown away afterwards."
 pubDate: 2026-10-29
 tags: ["AWS", "AI Agents", "MCP", "Playwright", "Claude Code"]
 draft: false
@@ -8,81 +8,48 @@ draft: false
 
 An AI agent with a browser is useful. An AI agent with *my* browser is a liability.
 
-The moment an agent can navigate to a URL chosen by a model, it is executing untrusted remote code. Every page it opens ships JavaScript, every download lands on a filesystem, and a prompt injection buried in a page can try to turn the browser against whatever else the agent can reach. Running that browser in a container on my workstation, or next to production services, moves the blast radius to exactly the wrong place.
+Once an agent can open a URL chosen by a model, it is running untrusted code from the web. Pages ship JavaScript, downloads land on disk, and a prompt injection in a page can try to turn the browser against anything else the agent can reach. Running that browser on my workstation, or next to production, puts the blast radius in the wrong place.
 
-This guide builds a browser the agent can break. Each session gets its own [AWS Lambda MicroVM](https://docs.aws.amazon.com/lambda/latest/dg/lambda-microvms-guide.html): a Firecracker virtual machine with its own kernel, filesystem and network namespace. Inside it runs headless Chromium behind the [Playwright MCP server](https://github.com/microsoft/playwright-mcp). Claude Code, Codex or a custom agent connects over HTTPS with a short-lived token, drives the browser through ordinary MCP tool calls, and the MicroVM suspends when the agent goes quiet and is terminated when the job is done.
+So I give the agent a browser it is allowed to break. Each session gets its own [AWS Lambda MicroVM](https://docs.aws.amazon.com/lambda/latest/dg/lambda-microvms-guide.html): a Firecracker virtual machine with its own kernel, disk and network. Inside it, headless Chromium runs behind the [Playwright MCP server](https://github.com/microsoft/playwright-mcp). Claude Code connects over HTTPS with a short-lived token, the MicroVM suspends when the agent goes quiet, and I terminate it when the job is done.
 
 ![An agent connects through the MicroVM HTTPS endpoint with a JWE token to a Lambda MicroVM running a hook supervisor, Playwright MCP and Chromium, while a small control plane runs, tokens and terminates MicroVMs](/blog/aws-lambda-microvms-agent-browser.svg)
 
-## 1. Why a MicroVM and not a container
+## 1. Why a MicroVM
 
-Lambda MicroVMs became generally available in June 2026. They expose the same Firecracker virtualisation that has run Lambda functions for years, but as a primitive you control: you build an image, run MicroVMs from it, connect to each one at its own HTTPS endpoint, and suspend, resume or terminate it on demand.
+Lambda MicroVMs became generally available in June 2026. They expose the Firecracker virtualisation that has run Lambda functions for years as something you control directly: build an image, run MicroVMs from it, talk to each one at its own HTTPS endpoint, and suspend, resume or terminate it on demand.
 
-Three properties make it a good fit for an agent browser:
+Three properties matter for a browser:
 
-| Property | What it means for a browser session |
+| Property | Why it matters here |
 |---|---|
-| VM-level isolation | A renderer exploit, a malicious download or an injected script is trapped inside a guest with its own kernel. The worst case is a VM you were about to delete. |
-| Snapshot launch | MicroVMs resume from a snapshot of an already-initialised image, so a session starts in seconds rather than after a full boot. |
-| Suspend and resume | When the agent is thinking or the user walks away, the VM suspends with memory and disk intact and compute charges stop. Open tabs are still there when traffic returns, for up to 8 hours. |
+| VM-level isolation | A renderer exploit or malicious download is trapped inside a guest with its own kernel. The worst case is a VM you were about to delete anyway. |
+| Snapshot launch | MicroVMs start from a snapshot of an initialised image, so a session is ready in seconds. |
+| Suspend and resume | When the agent is thinking, the VM suspends with memory and disk intact and compute charges stop. Tabs are still there when traffic returns, for up to 8 hours. |
 
-Containers share the host kernel. That is acceptable for code you wrote and tested. It is a poor boundary for a browser whose next destination is decided at runtime by a language model.
+Containers share the host kernel. That is fine for code you wrote. It is a poor boundary for a browser whose next destination is chosen at runtime by a language model.
 
-Amazon also offers a fully managed alternative in Bedrock AgentCore Browser. If you want zero plumbing and are happy inside the AgentCore ecosystem, use that. The MicroVM route is for when you want the browser image, egress policy, lifecycle and cost model in your own account and under your own control.
+If you want zero plumbing, Amazon Bedrock AgentCore Browser is the managed version of this idea. The MicroVM route is for when you want the browser image, egress and cost model in your own account.
 
-## 2. What we are building
+## 2. The pieces
 
-The design is deliberately small:
+* **MicroVM image**: Playwright's official arm64 container image, the Playwright MCP package, and a short supervisor script.
+* **Supervisor on port 8081**: answers the MicroVM lifecycle hooks. It starts Playwright MCP when the `/run` hook fires and stops it on `/terminate`.
+* **Playwright MCP on port 8080**: what the agent talks to. It exposes `browser_navigate`, `browser_snapshot`, `browser_click` and friends over HTTP, and launches Chromium on the first tool call.
+* **A small script on your laptop**: runs a MicroVM, mints a token for port 8080, prints the MCP URL, and terminates the session later.
 
-* **MicroVM image**: Playwright's official container image for arm64, plus the Playwright MCP package and a 60-line supervisor script.
-* **Supervisor on port 8081**: answers the MicroVM lifecycle hooks. On the `/run` hook it starts Playwright MCP with per-session policy taken from the run payload. On `/terminate` it shuts the browser down.
-* **Playwright MCP on port 8080**: the agent-facing surface. It exposes `browser_navigate`, `browser_snapshot`, `browser_click` and friends over streamable HTTP, and launches Chromium lazily on the first tool call.
-* **Control plane**: a short Node.js script that runs a MicroVM, mints a port-scoped auth token, prints the MCP URL, and terminates the session afterwards.
-
-Nothing is exposed on port 8081 to the agent. Tokens are scoped to port 8080 only, so the hook endpoints are unreachable from outside.
+Tokens are scoped to port 8080, so the agent can never reach the hook port.
 
 ## 3. Prerequisites
 
-* An AWS account with Lambda MicroVMs available. At launch the Regions were US East (N. Virginia and Ohio), US West (Oregon), Europe (Ireland) and Asia Pacific (Tokyo). I use `eu-west-1` throughout.
-* AWS CLI v2 recent enough to include the `lambda-microvms` command group.
+* An AWS account in a Region with Lambda MicroVMs. I use `eu-west-1`.
+* A recent AWS CLI v2 with the `lambda-microvms` command group.
 * An S3 bucket in the same Region for the build artifact.
-* Node.js 22 or later on your workstation for the control-plane script.
-* Docker with arm64 support if you want to test the image locally. MicroVMs are arm64 only at the time of writing.
+* Node.js 22 or later on your workstation.
+* An IAM build role that Lambda can assume. Its trust policy allows `lambda.amazonaws.com` to call `sts:AssumeRole` and `sts:TagSession`, and its permissions allow `s3:GetObject` on your bucket plus `logs:CreateLogGroup`, `logs:CreateLogStream` and `logs:PutLogEvents`.
 
-Create the IAM build role once. Lambda assumes it to fetch your zip from S3 and write build logs:
+## 4. Build the browser image
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": { "Service": "lambda.amazonaws.com" },
-    "Action": ["sts:AssumeRole", "sts:TagSession"]
-  }]
-}
-```
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject"],
-      "Resource": "arn:aws:s3:::YOUR_BUCKET/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-      "Resource": "arn:aws:logs:*:*:*"
-    }
-  ]
-}
-```
-
-## 4. The browser image
-
-Create a directory with four files.
+Create a directory with three files.
 
 **`package.json`**
 
@@ -108,15 +75,14 @@ COPY package.json supervisor.mjs ./
 # Playwright MCP pins its own Playwright build, so install the matching Chromium.
 RUN npm install --omit=dev \
  && npx playwright install chromium \
- && mkdir -p /data/output \
- && chown -R pwuser:pwuser /app /data
+ && chown -R pwuser:pwuser /app
 
 USER pwuser
 EXPOSE 8080 8081
 CMD ["node", "supervisor.mjs"]
 ```
 
-The Playwright image is published for arm64 and already contains every shared library Chromium needs, which saves a long and fragile `dnf` list on Amazon Linux. The `FROM` line only defines the application container. The MicroVM operating system itself comes from the Lambda-managed base image you pass at build time.
+The Playwright image already has every library Chromium needs on arm64, which saves a long and fragile package list on Amazon Linux. The `FROM` line only defines the application container. The MicroVM operating system comes from the Lambda-managed base image passed at build time.
 
 **`supervisor.mjs`**
 
@@ -125,121 +91,56 @@ import http from 'node:http';
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 
-const HOOK_PORT = 8081;
-const MCP_PORT = 8080;
 let browser = null;
 
-function waitForPort(port, timeoutMs = 30000) {
-  const deadline = Date.now() + timeoutMs;
-  return new Promise((resolve, reject) => {
+function waitForPort(port) {
+  return new Promise((resolve) => {
     const attempt = () => {
       const socket = net.connect(port, '127.0.0.1');
       socket.once('connect', () => { socket.destroy(); resolve(); });
-      socket.once('error', () => {
-        socket.destroy();
-        if (Date.now() > deadline) return reject(new Error(`port ${port} not ready`));
-        setTimeout(attempt, 250);
-      });
+      socket.once('error', () => { socket.destroy(); setTimeout(attempt, 250); });
     };
     attempt();
   });
 }
 
-function startBrowser(policy) {
-  const args = [
-    '--port', String(MCP_PORT),
-    '--host', '0.0.0.0',
-    '--allowed-hosts', '*',
-    '--headless',
-    '--isolated',
-    '--no-sandbox',
-    '--output-dir', '/data/output',
-    '--viewport-size', '1280x720',
-  ];
-  if (policy.allowedOrigins) args.push('--allowed-origins', policy.allowedOrigins);
-  if (policy.blockedOrigins) args.push('--blocked-origins', policy.blockedOrigins);
-
-  browser = spawn('node_modules/.bin/playwright-mcp', args, { stdio: 'inherit' });
-  browser.on('exit', (code) => {
-    console.log(`playwright-mcp exited with code ${code}`);
-    browser = null;
-  });
-  return waitForPort(MCP_PORT);
-}
-
 const hooks = {
   '/aws/lambda-microvms/runtime/v1/ready': async () => {},
-  '/aws/lambda-microvms/runtime/v1/run': async (body) => {
-    const { microvmId, runHookPayload } = JSON.parse(body || '{}');
-    let policy = {};
-    try { policy = JSON.parse(runHookPayload || '{}'); } catch { /* keep defaults */ }
-    console.log(`run hook for ${microvmId}`, policy);
-    await startBrowser(policy);
+  '/aws/lambda-microvms/runtime/v1/run': async () => {
+    browser = spawn('node_modules/.bin/playwright-mcp', [
+      '--port', '8080',
+      '--host', '0.0.0.0',
+      '--allowed-hosts', '*',
+      '--headless',
+      '--isolated',
+      '--no-sandbox',
+      '--output-dir', '/tmp/output',
+    ], { stdio: 'inherit' });
+    await waitForPort(8080);
   },
-  '/aws/lambda-microvms/runtime/v1/suspend': async () => {},
-  '/aws/lambda-microvms/runtime/v1/resume': async () => {},
   '/aws/lambda-microvms/runtime/v1/terminate': async () => { browser?.kill('SIGTERM'); },
 };
 
 http.createServer((req, res) => {
   const handler = hooks[req.url];
-  if (req.method !== 'POST' || !handler) {
-    res.writeHead(404).end();
-    return;
-  }
-  let body = '';
-  req.on('data', (chunk) => { body += chunk; });
-  req.on('end', async () => {
-    try {
-      await handler(body);
-      res.writeHead(200).end();
-    } catch (error) {
-      console.error(error);
-      res.writeHead(500).end();
-    }
+  if (req.method !== 'POST' || !handler) return res.writeHead(404).end();
+  req.on('data', () => {}).on('end', async () => {
+    try { await handler(); res.writeHead(200).end(); }
+    catch (error) { console.error(error); res.writeHead(500).end(); }
   });
-}).listen(HOOK_PORT, () => console.log(`hooks listening on ${HOOK_PORT}`));
+}).listen(8081, () => console.log('hooks listening on 8081'));
 ```
 
-Two choices here deserve an explanation.
+The browser is started in the `/run` hook rather than baked into the image. Lambda snapshots whatever is running when the build finishes, and every MicroVM resumes from that identical memory. A browser inside the snapshot would share its random state and profile across every session. Starting the MCP server after launch costs about a second.
 
-**The browser starts in the `/run` hook, not at build time.** Lambda snapshots whatever is running when the image build finishes, and every MicroVM launched from that image resumes from identical memory. If Chromium were already running in the snapshot, every session would share its random state, profile identifiers and any connections it had opened. Starting the MCP server after the MicroVM is running costs about a second, and Chromium itself launches lazily on the first tool call. It also lets each session receive its own policy through the run payload.
+Two flags need a word. Playwright MCP rejects requests whose `Host` header does not match its bind address, and requests arrive carrying the MicroVM endpoint hostname, so `--allowed-hosts '*'` is required. The real access control is the token Lambda checks before anything reaches the VM. And Chromium's own sandbox needs kernel features the application container does not grant by default, so it runs with `--no-sandbox`. Inside a disposable VM that is an acceptable trade. On a shared host it would not be.
 
-**`--allowed-hosts '*'` and `--no-sandbox`.** Playwright MCP refuses requests whose `Host` header does not match the address it bound to, as protection against DNS rebinding. Requests arrive through the MicroVM endpoint with that endpoint's hostname, which is unknown at build time, so the check has to be relaxed. The real access control is the JWE token enforced by Lambda before any request reaches the VM. Chromium's own process sandbox needs kernel features the application container does not grant by default. Here the MicroVM is the isolation boundary, so I accept running Chromium unsandboxed inside it. Both flags would be reckless on a shared host and are reasonable inside a disposable VM.
-
-### Test the image locally
-
-The image is a normal container, so you can exercise the whole hook flow on a laptop before involving AWS:
-
-```bash
-docker build --platform linux/arm64 -t agent-browser .
-docker run --rm -p 8080:8080 -p 8081:8081 agent-browser
-```
-
-In a second terminal, simulate the `/run` hook and attach Claude Code:
-
-```bash
-curl -X POST http://localhost:8081/aws/lambda-microvms/runtime/v1/run \
-  -H 'Content-Type: application/json' \
-  -d '{"microvmId":"local","runHookPayload":"{}"}'
-
-claude mcp add --transport http browser-local http://localhost:8080/mcp
-```
-
-Ask Claude Code to open a page and take a screenshot. If that works, the image is ready.
-
-## 5. Build the MicroVM image
-
-Zip the files and upload them:
+Zip and upload the files, then create the image:
 
 ```bash
 zip agent-browser.zip Dockerfile package.json supervisor.mjs
 aws s3 cp agent-browser.zip s3://YOUR_BUCKET/agent-browser.zip
-```
 
-Create the image. The hooks configuration tells Lambda which port the supervisor listens on and which hooks it should call:
-
-```bash
 aws lambda-microvms create-microvm-image \
   --region eu-west-1 \
   --name agent-browser \
@@ -251,22 +152,20 @@ aws lambda-microvms create-microvm-image \
   --hooks 'port=8081,microvmImageHooks={ready=ENABLED,readyTimeoutInSeconds=120},microvmHooks={run=ENABLED,runTimeoutInSeconds=60,terminate=ENABLED,terminateTimeoutInSeconds=10}'
 ```
 
-Lambda starts a fresh MicroVM from the base image, runs the Dockerfile, starts the supervisor, calls `/ready`, then captures a Firecracker snapshot of the disk and memory. Poll until the build completes:
+Lambda runs the Dockerfile, starts the supervisor, calls `/ready`, then snapshots the disk and memory. Poll until the state is `CREATED`:
 
 ```bash
-aws lambda-microvms get-microvm-image \
-  --region eu-west-1 \
-  --image-identifier agent-browser \
-  --query '{state:state,version:imageVersion,arn:imageArn}'
+aws lambda-microvms get-microvm-image --region eu-west-1 \
+  --image-identifier agent-browser --query '{state:state,arn:imageArn}'
 ```
 
-Build logs stream to CloudWatch under `/aws/lambda-microvms/agent-browser`, which is the first place to look if the state ends up as `CREATE_FAILED`.
+If it fails, the build logs are in CloudWatch under `/aws/lambda-microvms/agent-browser`.
 
-On sizing: 2 GB and 1 vCPU is the default baseline and is comfortable for one headless Chromium with a handful of tabs. MicroVMs scale vertically to four times the baseline when a heavy page needs it, and you only pay for the burst while it lasts. Start at the default and move up if you see pages time out.
+A 2 GB, 1 vCPU baseline is the default and is enough for one headless Chromium. MicroVMs burst to four times the baseline when a heavy page needs it, and you only pay for the burst while it lasts.
 
-## 6. The control plane
+## 5. Run a session and connect Claude Code
 
-A session needs four API calls: run a MicroVM, wait until it is `RUNNING`, mint a token for port 8080, and eventually terminate it. This script does all of them with the AWS SDK for JavaScript.
+A session is three API calls: run a MicroVM, mint a token, and terminate it later. This script does them with the AWS SDK.
 
 ```bash
 mkdir agent-browser-control && cd agent-browser-control
@@ -284,175 +183,80 @@ import {
   TerminateMicrovmCommand,
 } from '@aws-sdk/client-lambda-microvms';
 
-const region = process.env.AWS_REGION ?? 'eu-west-1';
+const region = 'eu-west-1';
 const client = new LambdaMicrovmsClient({ region });
-const managed = (name) => `arn:aws:lambda:${region}:aws:network-connector:aws-network-connector:${name}`;
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const connector = (name) => `arn:aws:lambda:${region}:aws:network-connector:aws-network-connector:${name}`;
+const [command, microvmArg] = process.argv.slice(2);
 
-async function mintToken(microvmId) {
+if (command === 'start') {
+  const { microvmId } = await client.send(new RunMicrovmCommand({
+    imageIdentifier: process.env.IMAGE_ARN,
+    ingressNetworkConnectors: [connector('ALL_INGRESS')],
+    egressNetworkConnectors: [connector('INTERNET_EGRESS')],
+    idlePolicy: { autoResumeEnabled: true, maxIdleDurationSeconds: 300, suspendedDurationSeconds: 7200 },
+    maximumDurationInSeconds: 14400,
+  }));
+
+  let vm;
+  do {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    vm = await client.send(new GetMicrovmCommand({ microvmIdentifier: microvmId }));
+  } while (vm.state === 'PENDING');
+  if (vm.state !== 'RUNNING') throw new Error(`${microvmId} is ${vm.state}: ${vm.stateReason}`);
+
   const { authToken } = await client.send(new CreateMicrovmAuthTokenCommand({
     microvmIdentifier: microvmId,
     expirationInMinutes: 60,
     allowedPorts: [{ port: 8080 }],
   }));
-  return authToken['X-aws-proxy-auth'];
-}
-
-async function start(policy) {
-  const { microvmId } = await client.send(new RunMicrovmCommand({
-    imageIdentifier: process.env.IMAGE_ARN,
-    ingressNetworkConnectors: [managed('ALL_INGRESS')],
-    egressNetworkConnectors: [managed('INTERNET_EGRESS')],
-    idlePolicy: { autoResumeEnabled: true, maxIdleDurationSeconds: 300, suspendedDurationSeconds: 7200 },
-    maximumDurationInSeconds: 14400,
-    runHookPayload: JSON.stringify(policy),
-  }));
-
-  let vm;
-  do {
-    await sleep(1000);
-    vm = await client.send(new GetMicrovmCommand({ microvmIdentifier: microvmId }));
-  } while (vm.state === 'PENDING');
-
-  if (vm.state !== 'RUNNING') {
-    throw new Error(`${microvmId} is ${vm.state}: ${vm.stateReason ?? 'no reason given'}`);
-  }
 
   console.log(`export MICROVM_ID=${microvmId}`);
   console.log(`export MICROVM_URL=https://${vm.endpoint}/mcp`);
-  console.log(`export MICROVM_TOKEN=${await mintToken(microvmId)}`);
-}
-
-const [command, arg] = process.argv.slice(2);
-
-if (command === 'start') {
-  await start(arg ? { blockedOrigins: arg } : {});
-} else if (command === 'token') {
-  console.log(`export MICROVM_TOKEN=${await mintToken(arg)}`);
+  console.log(`export MICROVM_TOKEN=${authToken['X-aws-proxy-auth']}`);
 } else if (command === 'stop') {
-  await client.send(new TerminateMicrovmCommand({ microvmIdentifier: arg }));
-  console.log(`terminated ${arg}`);
-} else {
-  console.error('usage: node session.mjs start [blockedOrigins] | token <id> | stop <id>');
-  process.exit(1);
+  await client.send(new TerminateMicrovmCommand({ microvmIdentifier: microvmArg }));
+  console.log(`terminated ${microvmArg}`);
 }
 ```
 
-Start a session and export what it prints:
+Start a session, then hand the URL and token to Claude Code:
 
 ```bash
 export IMAGE_ARN=arn:aws:lambda:eu-west-1:123456789012:microvm-image:agent-browser
 eval "$(node session.mjs start)"
-```
 
-The idle policy suspends the MicroVM after five minutes without traffic, keeps the suspended state for two hours, and resumes automatically on the next request. The hard maximum of four hours exists so that a forgotten session cannot run up a bill for a day. Adjust both to taste, but always set them.
-
-The second argument to `start` is passed to the browser as a blocked-origin list. It is a convenience for keeping an agent away from, say, your internal admin tools. It is enforced in Playwright, not in the network, so treat it as a guard rail and not a security boundary. For real egress control, create a VPC egress network connector and route the MicroVM's traffic through a subnet whose security groups and firewall you control.
-
-## 7. Connect an agent
-
-### Claude Code
-
-```bash
 claude mcp add --transport http browser "$MICROVM_URL" \
   --header "X-aws-proxy-auth: $MICROVM_TOKEN"
 ```
 
-Every tool Playwright MCP exposes is now available in the session. Ask Claude Code to open a page, take a snapshot, or fill in a form, and it happens inside the MicroVM. Screenshots come back as tool results. Downloads land in `/data/output` on the VM and nowhere else.
+That is the whole integration. Ask Claude Code to open a page, take a snapshot or fill in a form, and it happens inside the MicroVM. Screenshots come back as tool results. Downloads stay on the VM.
 
-Tokens live for at most 60 minutes. For longer sessions, keep the server definition in a project `.mcp.json` that reads the token from the environment, then re-mint with `node session.mjs token "$MICROVM_ID"` and reconnect with the `/mcp` command inside Claude Code:
+Any other MCP client works the same way: point it at the URL and send the `X-aws-proxy-auth` header. Tokens last at most 60 minutes, so for a long session mint a new one with `create-microvm-auth-token` and reconnect.
 
-```json
-{
-  "mcpServers": {
-    "browser": {
-      "type": "http",
-      "url": "${MICROVM_URL}",
-      "headers": {
-        "X-aws-proxy-auth": "${MICROVM_TOKEN}"
-      }
-    }
-  }
-}
-```
+The idle policy suspends the VM after five minutes without traffic, keeps the suspended state for two hours, then terminates it. The four-hour maximum means a forgotten session cannot run all day. Always set both.
 
-### Codex
+## 6. Pause, resume, stop
 
-Codex reads header values from environment variables, which keeps the token out of the config file:
+After five minutes of silence Lambda checkpoints the VM and stops charging for compute. Chromium is frozen with every tab and cookie in place. The agent's next tool call resumes the VM, adds a few seconds to that one request, and then everything is back to normal speed.
 
-```toml
-[mcp_servers.browser]
-url = "https://mvm-01234567-abcd-ef01-2345-6789abcdef01.lambda-microvm.eu-west-1.on.aws/mcp"
-env_http_headers = { "X-aws-proxy-auth" = "MICROVM_TOKEN" }
-```
-
-### A custom agent
-
-Any MCP client works. With the TypeScript SDK the headers go on the transport:
-
-```ts
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-
-const transport = new StreamableHTTPClientTransport(new URL(process.env.MICROVM_URL), {
-  requestInit: { headers: { 'X-aws-proxy-auth': process.env.MICROVM_TOKEN } },
-});
-
-const client = new Client({ name: 'research-agent', version: '1.0.0' });
-await client.connect(transport);
-
-await client.callTool({ name: 'browser_navigate', arguments: { url: 'https://example.com' } });
-const snapshot = await client.callTool({ name: 'browser_snapshot', arguments: {} });
-```
-
-If you would rather drive raw Playwright than MCP, the same image can expose Chromium's DevTools port behind a small reverse proxy that rewrites the `Host` header, and Playwright's `connectOverCDP` accepts the same `X-aws-proxy-auth` header. I prefer MCP because it gives Claude Code and Codex the browser for free, and the accessibility snapshots it returns are far cheaper in tokens than screenshots.
-
-## 8. Suspend, resume and the end of a session
-
-The interesting behaviour happens when nobody is talking to the browser.
-
-After five minutes without requests, Lambda calls the `/suspend` hook, checkpoints memory and disk, and stops charging for compute. Chromium is frozen mid-flight with every tab, cookie and scroll position intact. When the agent's next tool call arrives, Lambda resumes the MicroVM, runs the `/resume` hook, and delivers the request. That first call carries the resume latency, typically a few seconds for a 2 GB VM. Every call after that is normal.
-
-Playwright MCP has its own idle timer, which closes the browser after an hour of inactivity and relaunches it on the next call. The two interact sensibly: a VM that suspends inside that hour keeps the browser; one that stays active but unused for an hour gets a fresh browser.
-
-When the task is finished, terminate the session:
+When you are done:
 
 ```bash
 node session.mjs stop "$MICROVM_ID"
 claude mcp remove browser
 ```
 
-Termination calls the `/terminate` hook, releases everything, and stops all charges. If you forget, the idle policy terminates the VM two hours after it suspends, and the maximum duration terminates it after four hours regardless.
+Termination releases everything and stops all charges. Nothing from the session survives.
 
-## 9. What it costs
+## 7. Cost and safety in brief
 
-Prices below are US East arm64 list prices in October 2026. Check the [Lambda pricing page](https://aws.amazon.com/lambda/pricing/) before you plan anything around them.
+At US East arm64 list prices in October 2026, a 2 GB browser costs about 13 cents per hour while running, under a cent to suspend and resume, and nothing while suspended beyond trivial snapshot storage. An hour-long session where the agent browses for 20 minutes costs a few cents. Check the [Lambda pricing page](https://aws.amazon.com/lambda/pricing/) before planning around those numbers.
 
-| Item | Rate | For a 2 GB / 1 vCPU browser |
-|---|---|---|
-| Baseline compute while running | per vCPU-second plus per GB-second | about $0.13 per hour |
-| Snapshot write on suspend | $0.0038 per GB | under $0.01 |
-| Snapshot read on resume | $0.00155 per GB | under $0.01 |
-| Suspended state storage | $0.08 per GB-month | negligible for hours |
+On safety, the setup above is already far better than a local browser. Four habits keep it that way:
 
-A one-hour research session where the agent is actively browsing for 20 minutes and idle for the rest costs a few cents. Compare that with keeping a browser container warm all day, or with per-seat hosted browser plans, and the economics are comfortable for individual and team use. The 4x vertical burst is billed only while it is in use, so a heavy page does not change the picture much.
+1. One MicroVM per task. The isolation argument only holds if sessions never share a VM, and the pricing makes that cheap.
+2. Short, port-scoped tokens. Mint them for the length of the task.
+3. No execution role unless the browser genuinely needs AWS access. Then a compromised browser has no credentials to steal.
+4. Control egress in the network if it matters. Attach a VPC egress connector and filter there. Browser-level origin lists are advice, not enforcement.
 
-The bandwidth of the endpoint scales with the baseline size: 4 MB/s at 2 GB. That is plenty for MCP traffic and screenshots. It would not be enough to stream video out of the VM, which is another reason to prefer snapshots over pixels.
-
-## 10. Hardening checklist
-
-The default setup is already far safer than a local browser. Before letting a team or a production agent use it, tighten the following:
-
-1. **Scope tokens to one port and keep them short.** The control plane already limits tokens to port 8080. Mint them for the length of the task, not the maximum.
-2. **One MicroVM per task, never per team.** The isolation argument only holds if sessions do not share a VM. The cost model makes this cheap.
-3. **Control egress in the network.** Attach a VPC egress connector and put a filtering proxy or firewall in that path. In-browser origin lists are advice, not enforcement.
-4. **Give the MicroVM no execution role unless it needs one.** The browser does not need AWS credentials. Without an execution role, a compromised browser has nothing to steal from the instance metadata it does not have.
-5. **Treat downloads as hostile.** Anything in `/data/output` came from a page the model chose. If results must leave the VM, pull specific files out through a tool call and scan them, rather than mounting shared storage.
-6. **Log the session.** Pass `--save-session` to Playwright MCP, or ship the supervisor's stdout to CloudWatch through the execution role, so you can replay what the agent actually did.
-7. **Rebuild on base image updates.** Lambda deprecates base image versions over time. Rebuilding also picks up new Chromium releases, which matters more for a browser than for most workloads.
-
-## 11. Where this fits
-
-I now think of agent browsing the way I think of CI runners: a fresh, isolated environment per job, torn down afterwards, with the ability to pause when nothing is happening. Lambda MicroVMs give you that without operating a Firecracker fleet, and the suspend and resume behaviour fits the stop-start rhythm of an agent better than any always-on container.
-
-The pieces are also independent. Swap Playwright MCP for a different browser tool server, add a run-hook payload that preloads cookies from Secrets Manager, or put the whole thing behind an API that your own agents call. The MicroVM stays what it should be: a browser that nobody has to trust.
+I now treat agent browsing the way I treat CI runners: a fresh, isolated environment per job, paused when idle and gone afterwards. Lambda MicroVMs give you that without running a Firecracker fleet yourself, and the result is a browser nobody has to trust.

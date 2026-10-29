@@ -37,7 +37,7 @@
   <rect x="560" y="164" width="166" height="72" rx="8" fill="#18181b" stroke="#3f3f46"/>
   <text x="643" y="190" text-anchor="middle" fill="#e4e4e7" font-size="13" font-weight="600">supervisor.mjs</text>
   <text x="643" y="208" text-anchor="middle" fill="#a1a1aa" font-size="11">:8081 lifecycle hooks</text>
-  <text x="643" y="224" text-anchor="middle" fill="#a1a1aa" font-size="11">/run /suspend /resume /terminate</text>
+  <text x="643" y="224" text-anchor="middle" fill="#a1a1aa" font-size="11">/ready /run /terminate</text>
 
   <!-- Playwright MCP -->
   <rect x="560" y="262" width="166" height="72" rx="8" fill="#18181b" stroke="#34d399"/>
@@ -56,7 +56,7 @@
   <rect x="750" y="262" width="158" height="72" rx="8" fill="#18181b" stroke="#3f3f46"/>
   <text x="829" y="288" text-anchor="middle" fill="#e4e4e7" font-size="13" font-weight="600">Chromium</text>
   <text x="829" y="306" text-anchor="middle" fill="#a1a1aa" font-size="11">headless, isolated profile</text>
-  <text x="829" y="322" text-anchor="middle" fill="#a1a1aa" font-size="11">downloads in /data/output</text>
+  <text x="829" y="322" text-anchor="middle" fill="#a1a1aa" font-size="11">downloads stay in the VM</text>
 
   <!-- MCP to Chromium -->
   <line x1="726" y1="298" x2="748" y2="298" stroke="#a1a1aa" stroke-width="1.5" marker-end="url(#arrow-muted)"/>
@@ -74,7 +74,7 @@
   <!-- Control plane -->
   <rect x="32" y="400" width="478" height="112" rx="8" fill="#18181b" stroke="#3f3f46"/>
   <text x="52" y="428" fill="#e4e4e7" font-size="14" font-weight="600">Control plane (session.mjs)</text>
-  <text x="52" y="452" fill="#a1a1aa" font-size="12">run-microvm  with idle policy and run payload</text>
+  <text x="52" y="452" fill="#a1a1aa" font-size="12">run-microvm  with idle policy and max duration</text>
   <text x="52" y="472" fill="#a1a1aa" font-size="12">create-microvm-auth-token  scoped to port 8080, 60 min</text>
   <text x="52" y="492" fill="#a1a1aa" font-size="12">terminate-microvm  when the task is finished</text>
 

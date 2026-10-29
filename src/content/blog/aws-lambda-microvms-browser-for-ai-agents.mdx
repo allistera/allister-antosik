@@ -22,9 +22,9 @@ Three properties matter for a browser:
 
 | Property | Why it matters here |
 |---|---|
-| VM-level isolation | A renderer exploit or malicious download is trapped inside a guest with its own kernel. The worst case is a VM you were about to delete anyway. |
-| Snapshot launch | MicroVMs start from a snapshot of an initialised image, so a session is ready in seconds. |
-| Suspend and resume | When the agent is thinking, the VM suspends with memory and disk intact and compute charges stop. Tabs are still there when traffic returns, for up to 8 hours. |
+| **VM-level isolation** | A renderer exploit or malicious download is trapped inside a guest with its own kernel. The worst case is a VM you were about to delete anyway. |
+| **Snapshot launch** | MicroVMs start from a snapshot of an initialised image, so a session is ready in seconds. |
+| **Suspend and resume** | When the agent is thinking, the VM suspends with memory and disk intact and compute charges stop. Tabs are still there when traffic returns, for up to 8 hours. |
 
 Containers share the host kernel. That is fine for code you wrote. It is a poor boundary for a browser whose next destination is chosen at runtime by a language model.
 

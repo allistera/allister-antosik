@@ -251,4 +251,30 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await expect(page.locator('#blog-posts-list .blog-post-card.hidden')).toHaveCount(0);
   });
 
+  // TC-F4-16: Markdown tables render with padded, bordered cells
+  test('TC-F4-16: Markdown tables render with padded, bordered cells', async ({ page }) => {
+    await page.goto('/blog/conventional-commits-for-sres/');
+
+    const table = page.locator('article table').first();
+    await expect(table).toBeVisible();
+
+    const headerCell = table.locator('th').first();
+    await expect(headerCell).toContainText('Type');
+
+    const bodyCell = table.locator('tbody td').first();
+    await expect(bodyCell).toBeVisible();
+
+    const cellStyle = await bodyCell.evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return {
+        paddingLeft: parseFloat(style.paddingLeft),
+        paddingTop: parseFloat(style.paddingTop),
+        borderWidth: parseFloat(style.borderBottomWidth),
+      };
+    });
+    expect(cellStyle.paddingLeft).toBeGreaterThan(0);
+    expect(cellStyle.paddingTop).toBeGreaterThan(0);
+    expect(cellStyle.borderWidth).toBeGreaterThan(0);
+  });
+
 });

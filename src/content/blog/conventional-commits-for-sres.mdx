@@ -1,0 +1,280 @@
+---
+title: "Conventional Commits for SREs"
+description: "A practical guide to using Conventional Commits across application code, infrastructure as code, observability and delivery tooling, with a recommended starting policy for infrastructure and service teams."
+pubDate: 2026-10-29
+tags: ["Git", "SRE", "DevOps", "CI/CD"]
+draft: false
+---
+
+Most of the Git history I read is not application code. It is Terraform, Kubernetes manifests, alert rules, pipeline definitions and the small tools that hold them together. When something breaks at 3am, that history is the first place I look, and a log full of `chore: update` and `fix stuff` tells me nothing.
+
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) fixes that with a small amount of structure. Each message records what changed, why it changed, and whether anyone consuming the change needs to adapt. Tools can then read the same metadata to generate changelogs and pick version numbers. This post covers how I apply the convention to SRE work, where the rules get fuzzy for infrastructure, and the policy I would start a team on.
+
+The short version: validate the messages that enter the release branch, explain compatibility changes explicitly, and add release automation only once the team classifies changes consistently.
+
+## 1. Writing a useful commit message
+
+The format is small:
+
+```text
+<type>[(scope)][!]: <description>
+
+[optional body]
+
+[optional footers]
+```
+
+The type and description are required. Scope, the breaking marker, body and footers are optional. Use a colon followed by a space, and separate the header, body and footers with blank lines.
+
+```text
+fix(worker): stop retries after cancellation
+```
+
+Here `fix` describes the purpose, `worker` identifies the component, and the description states the behaviour being corrected. Pick scopes that readers recognise and use them consistently. A scope that changes name every few commits is worse than no scope at all.
+
+### Preserve the operational context
+
+The header is for the short log. The body is for the engineer who finds this commit in a bisect six months from now.
+
+```text
+fix(worker): stop retries after cancellation
+
+The retry loop continued after the caller cancelled the request,
+consuming worker capacity for abandoned work. Check cancellation
+before scheduling another attempt.
+
+Refs: OPS-142
+```
+
+Use the body for the failure mode, the rationale and any constraints. Keep incident and ticket references alongside that explanation rather than instead of it. Tickets get archived and trackers get migrated; the Git history stays.
+
+## 2. Choosing a commit type
+
+The vocabulary below follows the common Angular and commitlint conventions. The type expresses the purpose of the change; the scope identifies the affected area.
+
+| Type | Typical use | SRE example |
+|---|---|---|
+| `feat` | Introduce a capability | `feat(network): add private endpoints` |
+| `fix` | Correct faulty behaviour | `fix(worker): release idle connections` |
+| `docs` | Change documentation | `docs(runbooks): explain queue recovery` |
+| `refactor` | Restructure existing code | `refactor(auth): extract token parsing` |
+| `perf` | Improve performance | `perf(cache): batch key lookups` |
+| `test` | Add or correct tests | `test(health): cover startup failures` |
+| `build` | Change builds or dependencies | `build(deps): refresh lint tooling` |
+| `ci` | Change delivery automation | `ci(release): add canary checks` |
+| `chore` | Perform routine maintenance | `chore: update repository metadata` |
+| `style` | Change code formatting | `style: apply the formatter` |
+| `revert` | Undo an earlier change | `revert(gateway): restore the timeout` |
+
+The specification only assigns release meaning to `feat`, `fix` and breaking changes. Every other type is allowed and has no prescribed version effect unless it carries a breaking change.
+
+### Classify the effect on consumers
+
+This is where infrastructure teams most often go wrong. Infrastructure changes deserve the same classification as application changes. An optional module capability is a feature. A faulty route is a fix. Labelling every Terraform or Kubernetes change `chore` throws away exactly the information a reader needs.
+
+```text
+feat(terraform): support optional multi-zone worker pools
+fix(network): correct the default route configuration
+docs(network): explain subnet sizing requirements
+```
+
+For mixed work, aim for one coherent change per retained commit or squash commit. Tests and documentation delivered with a feature usually belong to that feature. Unrelated maintenance should be separated so its purpose stays clear.
+
+Document the team's choices for ambiguous categories. Agree whether routine dependency maintenance is `build(deps)` or `chore(deps)`, and if you add custom types such as `ops` or `security`, keep them aligned with the linter and the release rules.
+
+## 3. Compatibility and release versions
+
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html) requires a declared public API. It can be expressed in code or documentation, and for an internal platform the consumers are usually other engineering teams.
+
+For SRE tooling, the supported interface typically includes module inputs and outputs, configuration keys, CLI flags, event schemas, and supported metric names and labels. Treat a change as breaking when existing consumers must adapt to keep using that interface.
+
+### Marking a breaking change
+
+Use `!` immediately before the colon, an uppercase `BREAKING CHANGE:` footer, or both. This applies to any commit type.
+
+My recommendation is to use both markers and to explain the required migration. The `!` makes the change visible in a one-line log; the footer is what the engineer performing the upgrade actually needs.
+
+```text
+feat(terraform)!: require explicit subnet IDs
+
+Explicit selection makes worker placement predictable.
+
+BREAKING CHANGE: subnet_ids is now required. Set it to the
+worker subnet IDs used by the existing deployment before upgrading.
+```
+
+### Mapping changes to versions
+
+For a stable interface, SemVer increments MAJOR for incompatibility, MINOR for compatible features, and PATCH for compatible fixes. The usual mapping from commit to version looks like this:
+
+| Change | Commit signal | From version 2.4.3 |
+|---|---|---|
+| Compatible fix | `fix:` | 2.4.4 |
+| Compatible feature | `feat:` | 2.5.0 |
+| Breaking change | `!` or `BREAKING CHANGE:` | 3.0.0 |
+
+[semantic-release](https://github.com/semantic-release/commit-analyzer) selects the highest applicable release level across all the commits being released. Its defaults also treat `perf` as a patch release, and commits that match no release rule do not trigger a release at all. Custom rules can change any of this, which is one more reason to write the policy down.
+
+For `0.y.z` versions, SemVer permits an unstable interface. Agree the pre-1.0 policy up front and verify how your chosen tool applies it.
+
+### Review operational risk separately
+
+Compatibility and deployment risk are different questions. A perfectly compatible `fix` can still replace infrastructure or require careful rollout sequencing. Blast radius, state migration, validation and rollback requirements belong in the pull request and deployment documentation, not in the commit type.
+
+## 4. Examples from SRE work
+
+All messages here are illustrative, but the shapes are ones I use regularly.
+
+### An incident fix
+
+```text
+fix(worker): release connections after failed requests
+
+Close abandoned connections so repeated upstream failures cannot
+exhaust the worker connection pool.
+
+Incident: INC-281
+```
+
+The purpose is to restore expected behaviour. The message records the failure mechanism and links the incident for the longer story.
+
+### A supported metric name changes
+
+```text
+refactor(metrics)!: rename queue_depth to worker_queue_depth
+
+Use a component-specific name for the worker backlog.
+
+BREAKING CHANGE: queue_depth is no longer exported. Update
+recording rules, alerts, dashboards, and queries to use
+worker_queue_depth.
+```
+
+This is breaking when the metric belongs to a supported interface. Renaming a metric silently is one of the fastest ways to blind an on-call engineer. An initial release that exports both names gives consumers a migration window; the later removal should be assessed as its own change.
+
+### A dependency update fixes runtime behaviour
+
+```text
+fix(deps): update the HTTP client to prevent connection leaks
+
+Adopt the upstream fix for connections retained after cancelled
+requests.
+```
+
+Use `fix` when the dependency bump genuinely fixes a runtime defect and preserves compatibility. For development-only maintenance, fall back to whichever of `build(deps)` or `chore(deps)` the team documented.
+
+### Reverting a faulty change
+
+```text
+revert(gateway): restore the previous upstream timeout
+
+Undo the timeout reduction because valid long-running requests
+are failing.
+
+Refs: <original-commit-sha>
+Incident: INC-309
+```
+
+The specification leaves revert handling to release tools, so check what yours does. Assess the result for consumers too: removing a capability that has already shipped can itself be breaking. Review the generated release decision and document the restored behaviour.
+
+## 5. Pull requests and merge workflows
+
+Choose the enforcement point based on which messages survive into the release history. If you squash, the PR title matters more than any individual commit. If you rebase and keep commits, each commit matters. Either way, review the final message together with the code so that it describes the completed change.
+
+### A practical squash merge workflow
+
+1. Write a Conventional Commit PR title that describes the completed change.
+2. Validate the title in CI and correct it as the scope of the PR changes.
+3. Configure squash merging to use that title for the final commit.
+4. Carry the relevant rationale and any breaking-change footer into the final commit body.
+5. Review the final message at merge time, including anything automation has edited.
+
+GitHub offers [several squash-message formats](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/configuring-commit-squashing-for-pull-requests). The default can use the original commit message for a single-commit PR, or the PR title plus a commit list for a multi-commit PR. Configure the repository deliberately. Title validation alone does not guarantee what lands on the release branch.
+
+[Release Please](https://github.com/googleapis/release-please) recommends squash merging for exactly this reason: release notes then describe the completed change, and the intermediate corrections made while building an unreleased feature never become separate user-facing entries.
+
+### When individual commits are retained
+
+Validate the retained commits and keep their purposes coherent. Do any fixup or history cleanup before merging, and match the CI validation to the branch and commit range that release automation actually consumes.
+
+### Repositories containing several components
+
+Scopes such as `identity`, `worker` or `audit` help readers locate changes in a monorepo. Configure package selection, dependency propagation, and independent versus shared versioning explicitly, and choose rules that match how the components are actually released.
+
+### Introducing the convention to a team
+
+Start with a short contribution guide, a few representative examples, and validation at the merge boundary. Agree how to classify dependency updates and pipeline changes, then review several real PRs together.
+
+Once the messages are consistent, trial release-note generation and version selection before enabling publication. Include a compatible fix, a feature, a breaking change, a routine dependency update and a revert in the trial, and confirm the output matches the intended policy. It is much cheaper to discover a misconfigured release rule in a dry run than in a tagged release.
+
+During incident response, keep the subject focused on the recovery change and preserve the incident reference. Fit message validation into the established emergency-change workflow, with enough context retained for the later review.
+
+## 6. Tooling
+
+Keep message validation, release analysis and publication aligned. These three tools cover different parts of the workflow.
+
+| Tool | Role |
+|---|---|
+| [commitlint](https://commitlint.js.org/) | Checks message syntax and configured team rules. |
+| [semantic-release](https://semantic-release.gitbook.io/semantic-release/) | Selects versions, generates release notes and publishes using CI and configured plugins. |
+| [Release Please](https://github.com/googleapis/release-please) | Maintains release PRs with version and changelog changes, then tags releases when merged. Package publication uses separate automation. |
+
+### An example commitlint configuration
+
+For a repository using Node-based development tooling, install the CLI and the conventional preset, then create a config file:
+
+```bash
+npm install --save-dev @commitlint/cli @commitlint/config-conventional
+```
+
+```js
+// commitlint.config.cjs
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+};
+```
+
+Connect validation to the merge workflow. Local hooks give quick feedback, but CI should cover the messages the team relies on for releases, because local hooks are easy to skip and impossible to audit.
+
+### Align parser presets
+
+The conventional commitlint preset uses a Conventional Commits parser. semantic-release defaults to the Angular preset and exposes presets for both its analyser and its release-note generator. Align these settings and verify how each tool interprets `!` and breaking-change footers. A mismatch here is how a breaking change ends up released as a patch.
+
+## 7. A recommended starting policy
+
+These are proposed team conventions, not rules handed down from the specification. Agree them in the repository contribution guide and keep the automation consistent with that agreement.
+
+- Use Conventional Commits for messages that enter the release branch. Keep one coherent change per retained commit or squash commit.
+- Use lowercase types and stable component scopes. Describe the changed behaviour with a direct action verb.
+- Mark breaking changes with both `!` and a `BREAKING CHANGE:` footer that explains the migration.
+- Record incident or ticket references alongside useful reasoning. Keep deployment validation and rollback details in the appropriate change documentation.
+- Document which commit types trigger releases, how reverts are handled, and which components each release covers.
+- Review the meaning of the message as well as its syntax. A passing linter cannot establish that an interface remains compatible.
+
+## 8. Reviewer checklist
+
+When reviewing the final commit or squash message, ask:
+
+- Does the type describe the purpose and effect of the change?
+- Does the scope identify a component that readers recognise?
+- Can an engineer understand the changed behaviour without opening the ticket?
+- Have compatibility changes been identified, with actionable migration steps?
+- Will the final merge message preserve the title, rationale and footers?
+- Does the expected release outcome match the configured automation?
+- Are operational risks and validation steps covered in the PR or deployment documentation?
+
+None of this is heavyweight. It is a handful of agreed words at the front of a commit and a habit of explaining why. The payoff arrives the next time you are reading a Terraform history at 3am and every entry tells you what it did to the people depending on it.
+
+## References
+
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
+- [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
+- [commitlint commit conventions](https://commitlint.js.org/concepts/commit-conventions.html)
+- [Angular commit message guidelines](https://github.com/angular/angular/blob/main/contributing-docs/commit-message-guidelines.md)
+- [commitlint conventional preset](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional)
+- [commitlint configuration](https://commitlint.js.org/reference/configuration.html)
+- [semantic-release commit analyser](https://github.com/semantic-release/commit-analyzer)
+- [Release Please](https://github.com/googleapis/release-please)
+- [GitHub squash merge configuration](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/configuring-commit-squashing-for-pull-requests)
+- [semantic-release introduction](https://semantic-release.gitbook.io/semantic-release/)
+- [commitlint getting started](https://commitlint.js.org/guides/getting-started.html)

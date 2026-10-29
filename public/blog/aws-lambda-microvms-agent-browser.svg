@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title id="title">AWS Lambda MicroVM as a browser for AI agents</title>
+  <desc id="desc">An agent such as Claude Code, Codex or a custom MCP client sends HTTPS requests with an X-aws-proxy-auth token to a Lambda MicroVM endpoint. Inside the Firecracker MicroVM a supervisor on port 8081 handles lifecycle hooks and starts Playwright MCP on port 8080, which drives headless Chromium with internet egress. A control plane calls run-microvm, create-microvm-auth-token and terminate-microvm.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#a1a1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" fill="#09090b"/>
+
+  <!-- Agent box -->
+  <rect x="32" y="200" width="200" height="120" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="132" y="236" text-anchor="middle" fill="#e4e4e7" font-size="15" font-weight="600">AI agent</text>
+  <text x="132" y="262" text-anchor="middle" fill="#a1a1aa" font-size="12">Claude Code / Codex</text>
+  <text x="132" y="282" text-anchor="middle" fill="#a1a1aa" font-size="12">or any MCP client</text>
+
+  <!-- Agent to endpoint arrow -->
+  <line x1="232" y1="260" x2="318" y2="260" stroke="#34d399" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="275" y="236" text-anchor="middle" fill="#34d399" font-size="11">HTTPS + JWE</text>
+  <text x="275" y="250" text-anchor="middle" fill="#34d399" font-size="11">X-aws-proxy-auth</text>
+
+  <!-- Endpoint pill -->
+  <rect x="320" y="238" width="190" height="44" rx="22" fill="#052e16" stroke="#34d399"/>
+  <text x="415" y="256" text-anchor="middle" fill="#d1fae5" font-size="11">MicroVM endpoint</text>
+  <text x="415" y="271" text-anchor="middle" fill="#6ee7b7" font-size="10">*.lambda-microvm.eu-west-1.on.aws</text>
+
+  <!-- MicroVM container -->
+  <rect x="540" y="96" width="388" height="328" rx="12" fill="#0f0f12" stroke="#52525b" stroke-dasharray="6 4"/>
+  <text x="560" y="124" fill="#e4e4e7" font-size="14" font-weight="600">Lambda MicroVM</text>
+  <text x="560" y="142" fill="#a1a1aa" font-size="11">Firecracker: own kernel, disk and network namespace</text>
+
+  <!-- Supervisor -->
+  <rect x="560" y="164" width="166" height="72" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="643" y="190" text-anchor="middle" fill="#e4e4e7" font-size="13" font-weight="600">supervisor.mjs</text>
+  <text x="643" y="208" text-anchor="middle" fill="#a1a1aa" font-size="11">:8081 lifecycle hooks</text>
+  <text x="643" y="224" text-anchor="middle" fill="#a1a1aa" font-size="11">/run /suspend /resume /terminate</text>
+
+  <!-- Playwright MCP -->
+  <rect x="560" y="262" width="166" height="72" rx="8" fill="#18181b" stroke="#34d399"/>
+  <text x="643" y="288" text-anchor="middle" fill="#e4e4e7" font-size="13" font-weight="600">Playwright MCP</text>
+  <text x="643" y="306" text-anchor="middle" fill="#a1a1aa" font-size="11">:8080 streamable HTTP</text>
+  <text x="643" y="322" text-anchor="middle" fill="#a1a1aa" font-size="11">browser_navigate, snapshot...</text>
+
+  <!-- Supervisor spawns MCP -->
+  <line x1="643" y1="236" x2="643" y2="260" stroke="#a1a1aa" stroke-width="1.5" marker-end="url(#arrow-muted)"/>
+  <text x="652" y="252" fill="#a1a1aa" font-size="10">spawn on /run</text>
+
+  <!-- Endpoint to MCP -->
+  <path d="M 510 260 C 530 260, 530 298, 558 298" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Chromium -->
+  <rect x="750" y="262" width="158" height="72" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="829" y="288" text-anchor="middle" fill="#e4e4e7" font-size="13" font-weight="600">Chromium</text>
+  <text x="829" y="306" text-anchor="middle" fill="#a1a1aa" font-size="11">headless, isolated profile</text>
+  <text x="829" y="322" text-anchor="middle" fill="#a1a1aa" font-size="11">downloads in /data/output</text>
+
+  <!-- MCP to Chromium -->
+  <line x1="726" y1="298" x2="748" y2="298" stroke="#a1a1aa" stroke-width="1.5" marker-end="url(#arrow-muted)"/>
+
+  <!-- Chromium to internet -->
+  <line x1="829" y1="334" x2="829" y2="384" stroke="#a1a1aa" stroke-width="1.5" marker-end="url(#arrow-muted)"/>
+  <rect x="750" y="386" width="158" height="28" rx="14" fill="#18181b" stroke="#3f3f46"/>
+  <text x="829" y="404" text-anchor="middle" fill="#a1a1aa" font-size="11">INTERNET_EGRESS</text>
+
+  <!-- Suspend note -->
+  <text x="560" y="372" fill="#a1a1aa" font-size="11">Idle 5 min: suspend, memory and disk kept</text>
+  <text x="560" y="390" fill="#a1a1aa" font-size="11">Next request: auto-resume with tabs intact</text>
+  <text x="560" y="408" fill="#a1a1aa" font-size="11">Done: terminate, nothing persists</text>
+
+  <!-- Control plane -->
+  <rect x="32" y="400" width="478" height="112" rx="8" fill="#18181b" stroke="#3f3f46"/>
+  <text x="52" y="428" fill="#e4e4e7" font-size="14" font-weight="600">Control plane (session.mjs)</text>
+  <text x="52" y="452" fill="#a1a1aa" font-size="12">run-microvm  with idle policy and run payload</text>
+  <text x="52" y="472" fill="#a1a1aa" font-size="12">create-microvm-auth-token  scoped to port 8080, 60 min</text>
+  <text x="52" y="492" fill="#a1a1aa" font-size="12">terminate-microvm  when the task is finished</text>
+
+  <!-- Control plane to MicroVM -->
+  <path d="M 510 456 C 540 456, 520 456, 734 456 L 734 426" fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-muted)"/>
+  <text x="622" y="448" text-anchor="middle" fill="#a1a1aa" font-size="10">Lambda MicroVMs API</text>
+
+  <!-- Control plane to agent (token) -->
+  <line x1="132" y1="398" x2="132" y2="322" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-muted)"/>
+  <text x="140" y="364" fill="#a1a1aa" font-size="10">URL + token</text>
+
+  <!-- Caption -->
+  <text x="480" y="48" text-anchor="middle" fill="#e4e4e7" font-size="18" font-weight="600">A disposable browser per agent session</text>
+  <text x="480" y="70" text-anchor="middle" fill="#a1a1aa" font-size="12">One Lambda MicroVM per task. VM-level isolation, suspend when idle, terminate when done.</text>
+</svg>

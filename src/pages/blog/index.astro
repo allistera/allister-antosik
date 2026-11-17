@@ -88,13 +88,15 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
               </p>
             </div>
 
-            <div class="flex flex-wrap gap-2 pt-4 border-t border-zinc-800">
-              {post.data.tags.map(tag => (
-                <span class="blog-card-tag px-2 py-0.5 text-xs font-mono rounded bg-zinc-950 text-emerald-400 border border-zinc-800">
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {post.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2 pt-4 border-t border-zinc-800">
+                {post.data.tags.map(tag => (
+                  <span class="blog-card-tag px-2 py-0.5 text-xs font-mono rounded bg-zinc-950 text-emerald-400 border border-zinc-800">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </article>
         ))
       )}

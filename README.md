@@ -20,6 +20,17 @@ npm run preview
 
 `npm run build` runs Astro, then [Pagefind](https://pagefind.app) to index `dist/` for site search. Search is available in the header after a production build (dev server has no index until you build once).
 
+## Publish by email
+
+An email from `me@allisterantosik.com` to `blog@allisterantosik.com` becomes a post. The subject is the title and the body, converted to Markdown, is the content. The post is committed to `main` as `src/content/blog/<title-as-slug>.md`, and Vercel deploys it like any other commit.
+
+- The description is the opening paragraph and the date is the time the email arrived.
+- Posts arrive without tags. Add them by editing the file.
+- A title that is already taken is not overwritten, and nothing is published.
+- Attachments and images embedded in the email are not published. Images linked by URL are kept.
+
+The conversion runs in the `blog-email-publish` Cloudflare Worker, which lives in the [Cookie-Worker](https://github.com/allistera/Cookie-Worker) repository along with its setup notes.
+
 ## Deploy (Vercel)
 
 This project uses [`@astrojs/vercel`](https://docs.astro.build/en/guides/integrations-guide/vercel/).

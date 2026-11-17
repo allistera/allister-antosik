@@ -79,13 +79,15 @@ const title = pageTitle(post.data.title);
       </h1>
       
       <!-- Tags -->
-      <div class="flex flex-wrap gap-2 pt-2" aria-label="Tags">
-        {post.data.tags.map((tag: string) => (
-          <span class="px-2.5 py-0.5 text-xs font-mono rounded bg-zinc-900 text-emerald-400 border border-zinc-800">
-            #{tag}
-          </span>
-        ))}
-      </div>
+      {post.data.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 pt-2" aria-label="Tags">
+          {post.data.tags.map((tag: string) => (
+            <span class="px-2.5 py-0.5 text-xs font-mono rounded bg-zinc-900 text-emerald-400 border border-zinc-800">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
     </header>
 
     <TableOfContents headings={headings} />

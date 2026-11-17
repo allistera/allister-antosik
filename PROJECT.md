@@ -5,7 +5,7 @@ Bloggy is a statically generated Astro 7 portfolio and MDX blog. Vercel serves t
 ## Main data flows
 
 - `src/pages/index.astro` renders the homepage and project cards at build time. Project content is maintained in `src/components/ProjectCards.astro` and needs no browser request.
-- `src/content/blog/` contains MDX posts. Astro's content collection validates frontmatter, filters unpublished posts, and generates the blog index, post routes, RSS feed, sitemap entries, and JSON-LD metadata.
+- `src/content/blog/` contains MDX posts, and plain Markdown posts published by email (see the README). Astro's content collection validates frontmatter, filters unpublished posts, and generates the blog index, post routes, RSS feed, sitemap entries, and JSON-LD metadata.
 - `src/data/carousel.json` is imported by `src/components/Carousel.astro` during the build. The component renders complete slide HTML; the lazy client module in `src/scripts/carousel.ts` only adds navigation and the screenshot dialog.
 - Pagefind indexes the generated `dist/` directory after the Astro build. Its browser component loads only when the user opens search.
 - Sentry is optional. The integration and application telemetry entry point are included only when `PUBLIC_SENTRY_DSN` is set at build time.

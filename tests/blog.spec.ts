@@ -46,8 +46,12 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     const firstCard = page.locator('#blog-posts-list .blog-post-card').first();
     await expect(firstCard).toBeVisible();
 
-    const tags = firstCard.locator('.blog-card-tag');
-    await expect(tags.first()).toBeVisible();
+    // Tags are optional: a post published by email arrives without any.
+    const taggedCard = page
+      .locator('#blog-posts-list .blog-post-card')
+      .filter({ has: page.locator('.blog-card-tag') })
+      .first();
+    await expect(taggedCard.locator('.blog-card-tag').first()).toBeVisible();
     
     const readingTime = firstCard.locator('.reading-time');
     await expect(readingTime).toBeVisible();

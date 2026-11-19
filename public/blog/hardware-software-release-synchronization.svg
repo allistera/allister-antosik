@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1040" viewBox="0 0 800 1040" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+<title id="title">Dual-clock release synchronization</title><desc id="desc">Hardware progresses from concept and prototype boards through EVT, DVT, PVT and mass production over 12–24 months. Two-week software sprints and quarterly program increments synchronize at bring-up, feature lock, golden master freeze and launch. OS and application work moves from emulators and SIL through integration and polish to day-one OTA; firmware and BSP work moves from board bring-up through HIL regression to factory image lock.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#71717a"/></marker></defs>
+<rect width="800" height="1040" rx="16" fill="#09090b"/>
+<text x="400" y="44" text-anchor="middle" fill="#e4e4e7" font-size="25">Two clocks, shared release gates</text>
+<text x="400" y="78" text-anchor="middle" fill="#34d399" font-size="17">Hardware: 12–24 months</text>
+<text x="400" y="106" text-anchor="middle" fill="#a1a1aa" font-size="16">Software: 2-week sprints / quarterly increments</text>
+<rect x="32" y="137" width="736" height="65" rx="10" fill="#18181b" stroke="#34d399"/>
+<text x="400.0" y="175.5" text-anchor="middle" fill="#e4e4e7" font-size="17">Concept / architecture → Prototypes / development boards</text>
+<text x="118" y="244" text-anchor="middle" fill="#34d399" font-size="16">HARDWARE</text>
+<text x="396" y="244" text-anchor="middle" fill="#60a5fa" font-size="16">OS / APP TRAIN</text>
+<text x="652" y="244" text-anchor="middle" fill="#c4b5fd" font-size="16">FW / BSP TRAIN</text>
+<rect x="278" y="264" width="236" height="74" rx="10" fill="#18181b" stroke="#60a5fa"/>
+<text x="396.0" y="295.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Sprint 1…N</text>
+<text x="396.0" y="319.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Emulators / SIL</text>
+<rect x="536" y="264" width="232" height="74" rx="10" fill="#18181b" stroke="#c4b5fd"/>
+<text x="652.0" y="295.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Board bring-up</text>
+<text x="652.0" y="319.0" text-anchor="middle" fill="#e4e4e7" font-size="17">drops</text>
+<path d="M118 268 L118 350" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="22" y="364" width="756" height="136" rx="12" fill="#101014"/>
+<rect x="32" y="390" width="172" height="66" rx="10" fill="#18181b" stroke="#34d399"/>
+<text x="118.0" y="429.0" text-anchor="middle" fill="#e4e4e7" font-size="17">EVT</text>
+<rect x="278" y="390" width="236" height="66" rx="10" fill="#18181b" stroke="#60a5fa"/>
+<text x="396.0" y="429.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Integration</text>
+<rect x="536" y="390" width="232" height="66" rx="10" fill="#18181b" stroke="#c4b5fd"/>
+<text x="652.0" y="429.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Board bring-up</text>
+<path d="M204 423 L270 423" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="400" y="486" text-anchor="middle" fill="#fbbf24" font-size="17">Shared gate: Bring-up</text>
+<path d="M118 502 L118 520" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M396 502 L396 520" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M652 502 L652 520" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="22" y="524" width="756" height="136" rx="12" fill="#101014"/>
+<rect x="32" y="550" width="172" height="66" rx="10" fill="#18181b" stroke="#34d399"/>
+<text x="118.0" y="589.0" text-anchor="middle" fill="#e4e4e7" font-size="17">DVT</text>
+<rect x="278" y="550" width="236" height="66" rx="10" fill="#18181b" stroke="#60a5fa"/>
+<text x="396.0" y="589.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Feature complete</text>
+<rect x="536" y="550" width="232" height="66" rx="10" fill="#18181b" stroke="#c4b5fd"/>
+<text x="652.0" y="589.0" text-anchor="middle" fill="#e4e4e7" font-size="17">HIL regression</text>
+<path d="M204 583 L270 583" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="400" y="646" text-anchor="middle" fill="#fbbf24" font-size="17">Shared gate: Feature lock</text>
+<path d="M118 662 L118 680" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M396 662 L396 680" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M652 662 L652 680" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="22" y="684" width="756" height="136" rx="12" fill="#101014"/>
+<rect x="32" y="710" width="172" height="66" rx="10" fill="#18181b" stroke="#34d399"/>
+<text x="118.0" y="749.0" text-anchor="middle" fill="#e4e4e7" font-size="17">PVT</text>
+<rect x="278" y="710" width="236" height="66" rx="10" fill="#18181b" stroke="#60a5fa"/>
+<text x="396.0" y="749.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Polish / RC</text>
+<rect x="536" y="710" width="232" height="66" rx="10" fill="#18181b" stroke="#c4b5fd"/>
+<text x="652.0" y="737.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Factory image</text>
+<text x="652.0" y="761.0" text-anchor="middle" fill="#e4e4e7" font-size="17">lock</text>
+<path d="M204 743 L270 743" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="400" y="806" text-anchor="middle" fill="#fbbf24" font-size="17">Shared gate: GM freeze</text>
+<path d="M118 822 L118 840" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M396 822 L396 840" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M652 822 L652 840" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="22" y="844" width="756" height="136" rx="12" fill="#101014"/>
+<rect x="32" y="870" width="172" height="66" rx="10" fill="#18181b" stroke="#34d399"/>
+<text x="118.0" y="909.0" text-anchor="middle" fill="#e4e4e7" font-size="17">MP</text>
+<rect x="278" y="870" width="236" height="66" rx="10" fill="#18181b" stroke="#60a5fa"/>
+<text x="396.0" y="909.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Day-one OTA</text>
+<rect x="536" y="870" width="232" height="66" rx="10" fill="#18181b" stroke="#c4b5fd"/>
+<text x="652.0" y="897.0" text-anchor="middle" fill="#e4e4e7" font-size="17">Factory image</text>
+<text x="652.0" y="921.0" text-anchor="middle" fill="#e4e4e7" font-size="17">locked</text>
+<path d="M204 903 L270 903" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="400" y="966" text-anchor="middle" fill="#fbbf24" font-size="17">Shared gate: Launch</text>
+<path d="M396 338 L396 382" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M652 338 L652 382" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="400" y="1005" text-anchor="middle" fill="#a1a1aa" font-size="14">Sequence is schematic; phases are not equal in duration.</text>
+</svg>

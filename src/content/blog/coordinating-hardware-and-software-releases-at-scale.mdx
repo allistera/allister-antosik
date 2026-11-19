@@ -36,18 +36,7 @@ A foundational challenge in hardware-software co-design is managing the **Dual-C
 
 ### The Dual-Clock Synchronization Model
 
-```text
-HARDWARE NPI MACRO-CYCLE (12–24 Months)
-[Concept/Arch] ──► [Proto / Dev Boards] ──► [EVT] ──────► [DVT] ──────► [PVT] ──► [MP]
-                                              │             │             │         │
-                                              ▼             ▼             ▼         ▼
-SYNCHRONIZATION GATES                     (Bring-Up)   (Feature Lock) (GM Freeze) (Launch)
-                                              ▲             ▲             ▲         ▲
-                                              │             │             │         │
-SOFTWARE RELEASE TRAINS (2-Week Sprints / Quarterly Program Increments)
-├─ OS / App Train:   [Sprint 1..N on Emulators/SIL] ──► [Integration] ──► [Polish] ─► [Day-1 OTA]
-└─ FW / BSP Train:   [Board Bring-Up Drops] ──────────► [HIL Regress] ──► [Factory Image Lock]
-```
+![Hardware moves from concept and prototype boards through EVT, DVT, PVT and mass production. OS/app and firmware/BSP trains synchronize at bring-up, feature lock, golden master freeze and launch.](/blog/hardware-software-release-synchronization.svg)
 
 ### Three Core Cadence Mechanisms
 
@@ -114,27 +103,7 @@ After the **DVT Gate**, the hardware design is officially frozen. Any proposed c
 
 To prevent software teams from sitting idle while waiting for physical boards—and to prevent hardware bugs from paralyzing application development—large enterprises engineer strict decoupling and "shift-left" validation pipelines across the entire stack.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       APPLICATION & CLOUD LAYER                         │
-│   (Mobile Apps, UI, Cloud APIs, ML Models — Iterates Daily/Weekly)      │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │  Contract: Versioned IPC / AIDL / APIs
-┌───────────────────────────────────▼─────────────────────────────────────┐
-│                    OPERATING SYSTEM & MIDDLEWARE                        │
-│   (Linux / Android / Darwin / RTOS — Decoupled via Vendor Interface)    │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │  Contract: Hardware Abstraction Layer (HAL)
-┌───────────────────────────────────▼─────────────────────────────────────┐
-│                  FIRMWARE & BOARD SUPPORT PACKAGE (BSP)                 │
-│   (Bootloaders, Device Trees, Kernel Drivers, Power/Thermal Daemons)    │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │  Contract: Interface Control Docs (ICDs)
-┌───────────────────────────────────▼─────────────────────────────────────┐
-│                     SILICON & PHYSICAL HARDWARE                         │
-│   (SoCs, PMICs, Sensors, PCBs — Iterates on EVT / DVT / PVT Cycles)     │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+![Application and cloud connect to the OS through versioned IPC, AIDL and APIs; the OS connects to firmware and BSP through the HAL; firmware connects to silicon and physical hardware through interface control documents.](/blog/hardware-software-interface-contracts.svg)
 
 ### 1. Architectural Decoupling Mechanisms
 * **Interface Control Documents (ICDs):** Before schematics are finalized, EE and FW teams co-author machine-readable ICDs (often stored in Git as YAML/JSON or SystemRDL files). These define pinouts, bus addresses (I2C/SPI/PCIe), interrupt lines, power-sequencing timings, and register maps. Automated code generators compile these files directly into C/C++ header files for firmware and schematic symbols for EE, eliminating manual transcription errors.

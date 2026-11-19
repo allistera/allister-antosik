@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="850" viewBox="0 0 800 850" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+<title id="title">Hardware and software interface contracts</title><desc id="desc">Application and cloud communicate with the operating system and middleware through versioned IPC, AIDL and APIs. The OS connects to firmware and the board support package through the hardware abstraction layer. Firmware connects to silicon and physical hardware through interface control documents. These contracts decouple daily or weekly application iteration from EVT, DVT and PVT hardware cycles.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#71717a"/></marker></defs>
+<rect width="800" height="850" rx="16" fill="#09090b"/>
+<text x="400" y="46" text-anchor="middle" fill="#e4e4e7" font-size="25">Decouple the stack with contracts</text>
+<text x="400" y="80" text-anchor="middle" fill="#a1a1aa" font-size="16">Stable interfaces let each layer evolve independently</text>
+<rect x="32" y="118" width="736" height="122" rx="12" fill="#18181b" stroke="#60a5fa"/>
+<text x="400" y="152" text-anchor="middle" fill="#60a5fa" font-size="20">APPLICATION &amp; CLOUD</text>
+<text x="400" y="186" text-anchor="middle" fill="#e4e4e7" font-size="17">Mobile apps · UI · Cloud APIs · ML models</text>
+<text x="400" y="212" text-anchor="middle" fill="#e4e4e7" font-size="17">Iterates daily / weekly</text>
+<path d="M400 240 L400 298" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="150" y="255" width="500" height="28" rx="6" fill="#09090b"/>
+<text x="400" y="275" text-anchor="middle" fill="#fbbf24" font-size="17">Versioned IPC / AIDL / APIs</text>
+<rect x="32" y="306" width="736" height="122" rx="12" fill="#18181b" stroke="#60a5fa"/>
+<text x="400" y="340" text-anchor="middle" fill="#60a5fa" font-size="20">OPERATING SYSTEM &amp; MIDDLEWARE</text>
+<text x="400" y="374" text-anchor="middle" fill="#e4e4e7" font-size="17">Linux · Android · Darwin · RTOS</text>
+<text x="400" y="400" text-anchor="middle" fill="#e4e4e7" font-size="17">Decoupled via vendor interface</text>
+<path d="M400 428 L400 486" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="150" y="443" width="500" height="28" rx="6" fill="#09090b"/>
+<text x="400" y="463" text-anchor="middle" fill="#fbbf24" font-size="17">Hardware Abstraction Layer (HAL)</text>
+<rect x="32" y="494" width="736" height="122" rx="12" fill="#18181b" stroke="#c4b5fd"/>
+<text x="400" y="528" text-anchor="middle" fill="#c4b5fd" font-size="20">FIRMWARE &amp; BOARD SUPPORT PACKAGE</text>
+<text x="400" y="562" text-anchor="middle" fill="#e4e4e7" font-size="17">Bootloaders · Device trees · Kernel drivers</text>
+<text x="400" y="588" text-anchor="middle" fill="#e4e4e7" font-size="17">Power / thermal daemons</text>
+<path d="M400 616 L400 674" fill="none" stroke="#71717a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="150" y="631" width="500" height="28" rx="6" fill="#09090b"/>
+<text x="400" y="651" text-anchor="middle" fill="#fbbf24" font-size="17">Interface Control Documents (ICDs)</text>
+<rect x="32" y="682" width="736" height="122" rx="12" fill="#18181b" stroke="#34d399"/>
+<text x="400" y="716" text-anchor="middle" fill="#34d399" font-size="20">SILICON &amp; PHYSICAL HARDWARE</text>
+<text x="400" y="750" text-anchor="middle" fill="#e4e4e7" font-size="17">SoCs · PMICs · Sensors · PCBs</text>
+<text x="400" y="776" text-anchor="middle" fill="#e4e4e7" font-size="17">Iterates through EVT / DVT / PVT</text>
+</svg>

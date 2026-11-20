@@ -25,6 +25,7 @@
     "@astrojs/vercel": "^11.0.14",
     "@sentry/astro": "^11.7.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^7.3.8",
     "astro-seo": "^1.2.0",
     "js-yaml": "^5.4.3",

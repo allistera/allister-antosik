@@ -1,5 +1,7 @@
 ---
 import { SEO } from 'astro-seo';
+import Analytics from '@vercel/analytics/astro';
+
 import '../styles/global.css';
 
 interface Props {
@@ -45,6 +47,8 @@ const telemetryEnabled = Boolean(import.meta.env.PUBLIC_SENTRY_DSN);
     <meta name="theme-color" content="#09090b" />
     <meta name="msapplication-TileColor" content="#09090b" />
     <meta name="msapplication-TileImage" content="/icon-192.png" />
+
+    <Analytics />
 
     <SEO
       title={title}
